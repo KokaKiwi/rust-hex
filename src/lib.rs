@@ -127,4 +127,9 @@ mod test {
         assert_eq!(Vec::from_hex("666f6f6261721").unwrap_err(),
                    FromHexError::InvalidHexLength);
     }
+
+    #[test]
+    pub fn test_empty() {
+        assert_eq!(Vec::from_hex("").unwrap(), b"");
+    }
 }
