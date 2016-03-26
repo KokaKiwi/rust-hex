@@ -26,7 +26,7 @@ impl<T: AsRef<[u8]>> ToHex for T {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum FromHexError {
     InvalidHexCharacter {
         c: char,
