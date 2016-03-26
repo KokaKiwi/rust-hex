@@ -105,7 +105,7 @@ impl FromHex for Vec<u8> {
 
 #[cfg(test)]
 mod test {
-    use super::{FromHex, ToHex};
+    use super::{FromHex, FromHexError, ToHex};
 
     #[test]
     fn test_to_hex() {
@@ -118,5 +118,13 @@ mod test {
                    b"foobar");
         assert_eq!(Vec::from_hex("666F6F626172").unwrap(),
                    b"foobar");
+    }
+
+    #[test]
+    pub fn test_invalid_length() {
+        assert_eq!(Vec::from_hex("1").unwrap_err(),
+                   FromHexError::InvalidHexLength);
+        assert_eq!(Vec::from_hex("666f6f6261721").unwrap_err(),
+                   FromHexError::InvalidHexLength);
     }
 }
