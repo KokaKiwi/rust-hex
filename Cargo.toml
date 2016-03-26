@@ -5,5 +5,5 @@ authors = ["KokaKiwi <kokakiwi@kokakiwi.net>"]
 description = "A basic crate to encode values to hexadecimal representation."
 license = "MIT OR Apache-2.0"
 homepage = "https://github.com/KokaKiwi/rust-hex"
-documentation = "https://kokakiwi.github.io/rust-hex/doc/hex/"
+documentation = "https://kokakiwi.github.io/rust-hex/hex/"
 repository = "https://github.com/KokaKiwi/rust-hex"

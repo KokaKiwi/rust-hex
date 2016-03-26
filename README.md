@@ -1,3 +1,4 @@
+Documentation: https://kokakiwi.github.io/rust-hex/hex/
 
 ## License
 
