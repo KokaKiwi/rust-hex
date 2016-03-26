@@ -129,6 +129,15 @@ mod test {
     }
 
     #[test]
+    pub fn test_invalid_char() {
+        assert_eq!(Vec::from_hex("66ag").unwrap_err(),
+                   FromHexError::InvalidHexCharacter {
+                       c: 'g',
+                       index: 3
+                   });
+    }
+
+    #[test]
     pub fn test_empty() {
         assert_eq!(Vec::from_hex("").unwrap(), b"");
     }
