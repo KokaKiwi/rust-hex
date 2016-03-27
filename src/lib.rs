@@ -58,21 +58,22 @@ impl fmt::Display for FromHexError {
 pub trait FromHex: Sized {
     type Error;
 
-    fn from_hex(s: &str) -> Result<Self, Self::Error>;
+    fn from_hex<T: AsRef<[u8]>>(s: T) -> Result<Self, Self::Error>;
 }
 
 impl FromHex for Vec<u8> {
     type Error = FromHexError;
 
-    fn from_hex(s: &str) -> Result<Self, Self::Error> {
-        let mut b = Vec::with_capacity(s.len() / 2);
+    fn from_hex<T: AsRef<[u8]>>(s: T) -> Result<Self, Self::Error> {
+        let bytes = s.as_ref();
+        let mut b = Vec::with_capacity(bytes.len() / 2);
         let mut modulus = 0;
         let mut buf = 08;
 
-        for (idx, byte) in s.bytes().enumerate() {
+        for (idx, byte) in bytes.iter().enumerate() {
             buf <<= 4;
 
-            match byte {
+            match *byte {
                 b'A'...b'F' => buf |= byte - b'A' + 10,
                 b'a'...b'f' => buf |= byte - b'a' + 10,
                 b'0'...b'9' => buf |= byte - b'0',
@@ -81,9 +82,8 @@ impl FromHex for Vec<u8> {
                     continue
                 }
                 _ => {
-                    let ch = s[idx..].chars().next().unwrap();
                     return Err(FromHexError::InvalidHexCharacter {
-                        c: ch,
+                        c: bytes[idx] as char,
                         index: idx,
                     })
                 }
@@ -113,10 +113,18 @@ mod test {
     }
 
     #[test]
-    pub fn test_from_hex_okay() {
+    pub fn test_from_hex_okay_str() {
         assert_eq!(Vec::from_hex("666f6f626172").unwrap(),
                    b"foobar");
         assert_eq!(Vec::from_hex("666F6F626172").unwrap(),
+                   b"foobar");
+    }
+
+    #[test]
+    pub fn test_from_hex_okay_bytes() {
+        assert_eq!(Vec::from_hex(b"666f6f626172").unwrap(),
+                   b"foobar");
+        assert_eq!(Vec::from_hex(b"666F6F626172").unwrap(),
                    b"foobar");
     }
 
