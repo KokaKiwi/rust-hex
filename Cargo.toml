@@ -1,6 +1,6 @@
 [package]
 name = "hex"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["KokaKiwi <kokakiwi@kokakiwi.net>"]
 description = "A basic crate to encode values to hexadecimal representation."
 license = "MIT OR Apache-2.0"
