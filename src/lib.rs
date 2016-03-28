@@ -77,10 +77,6 @@ impl FromHex for Vec<u8> {
                 b'A'...b'F' => buf |= byte - b'A' + 10,
                 b'a'...b'f' => buf |= byte - b'a' + 10,
                 b'0'...b'9' => buf |= byte - b'0',
-                b' '|b'\r'|b'\n'|b'\t' => {
-                    buf >>= 4;
-                    continue
-                }
                 _ => {
                     return Err(FromHexError::InvalidHexCharacter {
                         c: bytes[idx] as char,
@@ -148,5 +144,14 @@ mod test {
     #[test]
     pub fn test_empty() {
         assert_eq!(Vec::from_hex("").unwrap(), b"");
+    }
+
+    #[test]
+    pub fn test_from_hex_whitespace() {
+        assert_eq!(Vec::from_hex("666f 6f626172").unwrap_err(),
+                   FromHexError::InvalidHexCharacter {
+                       c: ' ',
+                       index: 4
+                   });
     }
 }
