@@ -18,7 +18,7 @@ pub trait ToHex {
     }
 }
 
-impl<T: AsRef<[u8]>> ToHex for T {
+impl<T: AsRef<[u8]> + ?Sized> ToHex for T {
     fn to_hex(&self) -> String {
         static CHARS: &'static [u8] = b"0123456789abcdef";
 
@@ -64,22 +64,21 @@ impl fmt::Display for FromHexError {
     }
 }
 
-pub trait FromHex: Sized {
+pub trait FromHex {
     type Error;
 
-    fn from_hex<T: AsRef<[u8]>>(s: T) -> Result<Self, Self::Error>;
+    fn from_hex(&self) -> Result<Vec<u8>, Self::Error>;
 }
 
-impl FromHex for Vec<u8> {
+impl FromHex for [u8] {
     type Error = FromHexError;
 
-    fn from_hex<T: AsRef<[u8]>>(s: T) -> Result<Self, Self::Error> {
-        let bytes = s.as_ref();
-        let mut b = Vec::with_capacity(bytes.len() / 2);
+    fn from_hex(&self) -> Result<Vec<u8>, Self::Error> {
+        let mut b = Vec::with_capacity(self.len() / 2);
         let mut modulus = 0;
         let mut buf = 08;
 
-        for (idx, byte) in bytes.iter().enumerate() {
+        for (idx, byte) in self.iter().enumerate() {
             buf <<= 4;
 
             match *byte {
@@ -88,7 +87,7 @@ impl FromHex for Vec<u8> {
                 b'0'...b'9' => buf |= byte - b'0',
                 _ => {
                     return Err(FromHexError::InvalidHexCharacter {
-                        c: bytes[idx] as char,
+                        c: self[idx] as char,
                         index: idx,
                     })
                 }
@@ -108,6 +107,14 @@ impl FromHex for Vec<u8> {
     }
 }
 
+impl FromHex for str {
+    type Error = FromHexError;
+
+    fn from_hex(&self) -> Result<Vec<u8>, Self::Error> {
+        self.as_bytes().from_hex()
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::{FromHex, FromHexError, ToHex};
@@ -119,31 +126,31 @@ mod test {
 
     #[test]
     pub fn test_from_hex_okay_str() {
-        assert_eq!(Vec::from_hex("666f6f626172").unwrap(),
+        assert_eq!("666f6f626172".from_hex().unwrap(),
                    b"foobar");
-        assert_eq!(Vec::from_hex("666F6F626172").unwrap(),
+        assert_eq!("666F6F626172".from_hex().unwrap(),
                    b"foobar");
     }
 
     #[test]
     pub fn test_from_hex_okay_bytes() {
-        assert_eq!(Vec::from_hex(b"666f6f626172").unwrap(),
+        assert_eq!(b"666f6f626172".from_hex().unwrap(),
                    b"foobar");
-        assert_eq!(Vec::from_hex(b"666F6F626172").unwrap(),
+        assert_eq!(b"666F6F626172".from_hex().unwrap(),
                    b"foobar");
     }
 
     #[test]
     pub fn test_invalid_length() {
-        assert_eq!(Vec::from_hex("1").unwrap_err(),
+        assert_eq!("1".from_hex().unwrap_err(),
                    FromHexError::InvalidHexLength);
-        assert_eq!(Vec::from_hex("666f6f6261721").unwrap_err(),
+        assert_eq!("666f6f6261721".from_hex().unwrap_err(),
                    FromHexError::InvalidHexLength);
     }
 
     #[test]
     pub fn test_invalid_char() {
-        assert_eq!(Vec::from_hex("66ag").unwrap_err(),
+        assert_eq!("66ag".from_hex().unwrap_err(),
                    FromHexError::InvalidHexCharacter {
                        c: 'g',
                        index: 3
@@ -152,12 +159,12 @@ mod test {
 
     #[test]
     pub fn test_empty() {
-        assert_eq!(Vec::from_hex("").unwrap(), b"");
+        assert_eq!("".from_hex().unwrap(), b"");
     }
 
     #[test]
     pub fn test_from_hex_whitespace() {
-        assert_eq!(Vec::from_hex("666f 6f626172").unwrap_err(),
+        assert_eq!("666f 6f626172".from_hex().unwrap_err(),
                    FromHexError::InvalidHexCharacter {
                        c: ' ',
                        index: 4
