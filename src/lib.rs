@@ -18,7 +18,7 @@ pub trait ToHex {
     }
 }
 
-impl<T: AsRef<[u8]>> ToHex for T {
+impl<T: AsRef<[u8]> + ?Sized> ToHex for T {
     fn to_hex(&self) -> String {
         static CHARS: &'static [u8] = b"0123456789abcdef";
 
