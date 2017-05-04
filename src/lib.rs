@@ -64,22 +64,21 @@ impl fmt::Display for FromHexError {
     }
 }
 
-pub trait FromHex: Sized {
+pub trait FromHex {
     type Error;
 
-    fn from_hex<T: AsRef<[u8]>>(s: T) -> Result<Self, Self::Error>;
+    fn from_hex(&self) -> Result<Vec<u8>, Self::Error>;
 }
 
-impl FromHex for Vec<u8> {
+impl FromHex for [u8] {
     type Error = FromHexError;
 
-    fn from_hex<T: AsRef<[u8]>>(s: T) -> Result<Self, Self::Error> {
-        let bytes = s.as_ref();
-        let mut b = Vec::with_capacity(bytes.len() / 2);
+    fn from_hex(&self) -> Result<Vec<u8>, Self::Error> {
+        let mut b = Vec::with_capacity(self.len() / 2);
         let mut modulus = 0;
         let mut buf = 08;
 
-        for (idx, byte) in bytes.iter().enumerate() {
+        for (idx, byte) in self.iter().enumerate() {
             buf <<= 4;
 
             match *byte {
@@ -88,7 +87,7 @@ impl FromHex for Vec<u8> {
                 b'0'...b'9' => buf |= byte - b'0',
                 _ => {
                     return Err(FromHexError::InvalidHexCharacter {
-                        c: bytes[idx] as char,
+                        c: self[idx] as char,
                         index: idx,
                     })
                 }
@@ -105,6 +104,14 @@ impl FromHex for Vec<u8> {
             0 => Ok(b.into_iter().collect()),
             _ => Err(FromHexError::InvalidHexLength),
         }
+    }
+}
+
+impl FromHex for str {
+    type Error = FromHexError;
+
+    fn from_hex(&self) -> Result<Vec<u8>, Self::Error> {
+        self.as_bytes().from_hex()
     }
 }
 
