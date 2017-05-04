@@ -126,31 +126,31 @@ mod test {
 
     #[test]
     pub fn test_from_hex_okay_str() {
-        assert_eq!(Vec::from_hex("666f6f626172").unwrap(),
+        assert_eq!("666f6f626172".from_hex().unwrap(),
                    b"foobar");
-        assert_eq!(Vec::from_hex("666F6F626172").unwrap(),
+        assert_eq!("666F6F626172".from_hex().unwrap(),
                    b"foobar");
     }
 
     #[test]
     pub fn test_from_hex_okay_bytes() {
-        assert_eq!(Vec::from_hex(b"666f6f626172").unwrap(),
+        assert_eq!(b"666f6f626172".from_hex().unwrap(),
                    b"foobar");
-        assert_eq!(Vec::from_hex(b"666F6F626172").unwrap(),
+        assert_eq!(b"666F6F626172".from_hex().unwrap(),
                    b"foobar");
     }
 
     #[test]
     pub fn test_invalid_length() {
-        assert_eq!(Vec::from_hex("1").unwrap_err(),
+        assert_eq!("1".from_hex().unwrap_err(),
                    FromHexError::InvalidHexLength);
-        assert_eq!(Vec::from_hex("666f6f6261721").unwrap_err(),
+        assert_eq!("666f6f6261721".from_hex().unwrap_err(),
                    FromHexError::InvalidHexLength);
     }
 
     #[test]
     pub fn test_invalid_char() {
-        assert_eq!(Vec::from_hex("66ag").unwrap_err(),
+        assert_eq!("66ag".from_hex().unwrap_err(),
                    FromHexError::InvalidHexCharacter {
                        c: 'g',
                        index: 3
@@ -159,12 +159,12 @@ mod test {
 
     #[test]
     pub fn test_empty() {
-        assert_eq!(Vec::from_hex("").unwrap(), b"");
+        assert_eq!("".from_hex().unwrap(), b"");
     }
 
     #[test]
     pub fn test_from_hex_whitespace() {
-        assert_eq!(Vec::from_hex("666f 6f626172").unwrap_err(),
+        assert_eq!("666f 6f626172".from_hex().unwrap_err(),
                    FromHexError::InvalidHexCharacter {
                        c: ' ',
                        index: 4
