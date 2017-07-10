@@ -47,7 +47,7 @@ pub trait ToHex {
     /// are used (e.g. `f9b4ca`).
     fn write_hex<W: fmt::Write>(&self, w: &mut W) -> fmt::Result;
 
-    /// Writes the hex string representing `self` into `w`. Lower case letters
+    /// Writes the hex string representing `self` into `w`. Upper case letters
     /// are used (e.g. `F9B4CA`).
     fn write_hex_upper<W: fmt::Write>(&self, w: &mut W) -> fmt::Result;
 }
@@ -181,6 +181,8 @@ impl FromHex for Vec<u8> {
     }
 }
 
+// Helper macro to implement the trait for a few fixed sized arrays. Once Rust
+// has type level integers, this should be removed.
 macro_rules! impl_from_hex_for_array {
     ($len:expr) => {
         impl FromHex for [u8; $len] {
