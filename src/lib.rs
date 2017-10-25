@@ -225,6 +225,7 @@ impl_from_hex_for_array!(13);
 impl_from_hex_for_array!(14);
 impl_from_hex_for_array!(15);
 impl_from_hex_for_array!(16);
+impl_from_hex_for_array!(32);
 
 /// Encodes `data` as hex string using lowercase characters.
 ///
