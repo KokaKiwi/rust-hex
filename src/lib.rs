@@ -225,7 +225,14 @@ impl_from_hex_for_array!(13);
 impl_from_hex_for_array!(14);
 impl_from_hex_for_array!(15);
 impl_from_hex_for_array!(16);
+
+// Throw in some multiples of 8 which may be useful.
+impl_from_hex_for_array!(24);
 impl_from_hex_for_array!(32);
+impl_from_hex_for_array!(40);
+impl_from_hex_for_array!(48);
+impl_from_hex_for_array!(56);
+impl_from_hex_for_array!(64);
 
 /// Encodes `data` as hex string using lowercase characters.
 ///
