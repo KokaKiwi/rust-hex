@@ -1,3 +1,5 @@
+#![cfg_attr(feature = "benchmarks", feature(test))]
+
 // Copyright (c) 2013-2014 The Rust Project Developers.
 // Copyright (c) 2015-2017 The rust-hex Developers.
 //
@@ -381,5 +383,25 @@ mod test {
             <[u8; 5] as FromHex>::from_hex("666f6f626172"),
             Err(FromHexError::InvalidStringLength)
         );
+    }
+}
+
+
+#[cfg(all(feature = "benchmarks", test))]
+mod bench {
+    extern crate test;
+    use self::test::Bencher;
+
+    use super::*;
+
+    const MY_OWN_SOURCE: &[u8] = include_bytes!("lib.rs");
+
+    #[bench]
+    fn a_bench(b: &mut Bencher) {
+        b.bytes = MY_OWN_SOURCE.len() as u64;
+
+        b.iter(|| {
+            encode(MY_OWN_SOURCE)
+        });
     }
 }

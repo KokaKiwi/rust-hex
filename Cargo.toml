@@ -6,3 +6,6 @@ description = "Encoding and decoding data into/from hexadecimal representation."
 license = "MIT OR Apache-2.0"
 documentation = "https://docs.rs/hex/"
 repository = "https://github.com/KokaKiwi/rust-hex"
+
+[features]
+benchmarks = []
