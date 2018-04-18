@@ -228,8 +228,10 @@ impl_from_hex_for_array!(14);
 impl_from_hex_for_array!(15);
 impl_from_hex_for_array!(16);
 
-// Throw in some multiples of 8 which may be useful.
+// Throw in some useful sizes.
+impl_from_hex_for_array!(20);
 impl_from_hex_for_array!(24);
+impl_from_hex_for_array!(28);
 impl_from_hex_for_array!(32);
 impl_from_hex_for_array!(40);
 impl_from_hex_for_array!(48);
