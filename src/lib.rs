@@ -54,28 +54,28 @@ pub trait ToHex {
     fn write_hex_upper<W: fmt::Write>(&self, w: &mut W) -> fmt::Result;
 }
 
+fn hex_write<W: fmt::Write>(table: &[u8; 16], src: &[u8], w: &mut W) -> fmt::Result {
+    let hex = |byte: u8| table[byte as usize];
+
+    for &b in src.iter() {
+        w.write_char(hex((b >> 4) & 0xf) as char)?;
+        w.write_char(hex(b & 0xf) as char)?;
+    }
+
+    Ok(())
+}
 
 impl<T: AsRef<[u8]>> ToHex for T {
     fn write_hex<W: fmt::Write>(&self, w: &mut W) -> fmt::Result {
-        static CHARS: &'static [u8] = b"0123456789abcdef";
+        static CHARS: &'static [u8; 16] = b"0123456789abcdef";
 
-        for &byte in self.as_ref().iter() {
-            w.write_char(CHARS[(byte >>  4) as usize].into())?;
-            w.write_char(CHARS[(byte & 0xf) as usize].into())?;
-        }
-
-        Ok(())
+        hex_write(&CHARS, self.as_ref(), w)
     }
 
     fn write_hex_upper<W: fmt::Write>(&self, w: &mut W) -> fmt::Result {
-        static CHARS: &'static [u8] = b"0123456789ABCDEF";
+        static CHARS: &'static [u8; 16] = b"0123456789ABCDEF";
 
-        for &byte in self.as_ref().iter() {
-            w.write_char(CHARS[(byte >>  4) as usize].into())?;
-            w.write_char(CHARS[(byte & 0xf) as usize].into())?;
-        }
-
-        Ok(())
+        hex_write(&CHARS, self.as_ref(), w)
     }
 }
 
