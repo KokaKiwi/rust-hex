@@ -191,20 +191,8 @@ macro_rules! from_hex_array_impl {
             type Error = FromHexError;
 
             fn from_hex<T: AsRef<[u8]>>(hex: T) -> Result<Self, Self::Error> {
-                let hex = hex.as_ref();
-                if hex.len() % 2 != 0 {
-                    return Err(FromHexError::OddLength);
-                }
-                if hex.len() / 2 != $len {
-                    return Err(FromHexError::InvalidStringLength);
-                }
-
-                let mut out = [0; $len];
-                for (i, byte) in out.iter_mut().enumerate() {
-                    *byte = val(hex[2 * i], 2 * i)? << 4
-                        | val(hex[2 * i + 1], 2 * i + 1)?;
-                }
-
+                let mut out = [0u8; $len];
+                decode_to_slice(hex, &mut out as &mut [u8])?;
                 Ok(out)
             }
         }
@@ -291,6 +279,35 @@ pub fn encode_upper<T: AsRef<[u8]>>(data: T) -> String {
 /// ```
 pub fn decode<T: AsRef<[u8]>>(data: T) -> Result<Vec<u8>, FromHexError> {
     FromHex::from_hex(data)
+}
+
+/// Decode a hex string into a mutable bytes slice.
+///
+/// Both, upper and lower case characters are valid in the input string and can
+/// even be mixed (e.g. `f9b4ca`, `F9B4CA` and `f9B4Ca` are all valid strings).
+///
+/// # Example
+/// ```
+/// let mut bytes = [0u8; 4];
+/// assert_eq!(hex::decode_to_slice("6b697769", &mut bytes as &mut [u8]), Ok(()));
+/// assert_eq!(&bytes, b"kiwi");
+/// ```
+pub fn decode_to_slice<T: AsRef<[u8]>>(data: T, out: &mut [u8]) -> Result<(), FromHexError> {
+    let data = data.as_ref();
+
+    if data.len() % 2 != 0 {
+        return Err(FromHexError::OddLength);
+    }
+    if data.len() / 2 != out.len() {
+        return Err(FromHexError::InvalidStringLength);
+    }
+
+    for (i, byte) in out.iter_mut().enumerate() {
+        *byte = val(data[2 * i], 2 * i)? << 4
+            | val(data[2 * i + 1], 2 * i + 1)?;
+    }
+
+    Ok(())
 }
 
 
