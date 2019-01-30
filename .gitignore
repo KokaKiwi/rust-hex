@@ -1,2 +1,9 @@
-target
+# Rust stuff
+/target
 Cargo.lock
+
+# Misc stuff
+.*
+!.gitignore
+!.gitlab-ci.yml
+!.gitlab-ci-matrix.yml
