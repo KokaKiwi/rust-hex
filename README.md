@@ -1,6 +1,8 @@
 Documentation: https://docs.rs/hex
 
 ## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2FKokaKiwi%2Frust-hex.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2FKokaKiwi%2Frust-hex?ref=badge_shield)
+
 
 Licensed under either of
 
@@ -8,6 +10,9 @@ Licensed under either of
  * MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
 
 at your option.
+
+
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2FKokaKiwi%2Frust-hex.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2FKokaKiwi%2Frust-hex?ref=badge_large)
 
 ### Contribution
 
