@@ -21,6 +21,7 @@ steps:
     stage: test
     script:
       - cargo test
+      - cargo test --no-default-features
     dependencies:
       - compile
 
