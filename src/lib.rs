@@ -1,4 +1,5 @@
 #![cfg_attr(feature = "benchmarks", feature(test))]
+#![cfg_attr(not(feature = "std"), no_std)]
 
 // Copyright (c) 2013-2014 The Rust Project Developers.
 // Copyright (c) 2015-2018 The rust-hex Developers.
@@ -25,9 +26,11 @@
 //! }
 //! ```
 
-extern crate core;
+#[cfg(not(feature = "std"))]
+extern crate alloc;
+#[cfg(not(feature = "std"))]
+use alloc::{string::String, vec::Vec};
 
-use std::error;
 use core::fmt;
 use core::iter;
 
@@ -55,8 +58,8 @@ pub trait ToHex {
     fn encode_hex_upper<T: iter::FromIterator<char>>(&self) -> T;
 }
 
-const HEX_CHARS_LOWER: &'static[u8; 16] = b"0123456789abcdef";
-const HEX_CHARS_UPPER: &'static[u8; 16] = b"0123456789ABCDEF";
+const HEX_CHARS_LOWER: &[u8; 16] = b"0123456789abcdef";
+const HEX_CHARS_UPPER: &[u8; 16] = b"0123456789ABCDEF";
 
 struct BytesToHexChars<'a> {
     inner: ::core::slice::Iter<'a, u8>,
@@ -68,7 +71,7 @@ impl<'a> BytesToHexChars<'a> {
     fn new(inner: &'a [u8], table: &'static [u8; 16]) -> BytesToHexChars<'a> {
         BytesToHexChars {
             inner: inner.iter(),
-            table: table,
+            table,
             next: None,
         }
     }
@@ -142,7 +145,8 @@ pub enum FromHexError {
     InvalidStringLength,
 }
 
-impl error::Error for FromHexError {
+#[cfg(feature = "std")]
+impl std::error::Error for FromHexError {
     fn description(&self) -> &str {
         match *self {
             FromHexError::InvalidHexCharacter { .. } => "invalid character",
@@ -347,7 +351,7 @@ pub fn decode_to_slice<T: AsRef<[u8]>>(data: T, out: &mut [u8]) -> Result<(), Fr
 
 #[cfg(test)]
 mod test {
-    use super::{encode, decode, FromHex, FromHexError};
+    use super::*;
 
     #[test]
     fn test_encode() {
@@ -356,7 +360,7 @@ mod test {
 
     #[test]
     fn test_decode() {
-        assert_eq!(decode("666f6f626172"), Ok("foobar".to_owned().into_bytes()));
+        assert_eq!(decode("666f6f626172"), Ok(String::from("foobar").into_bytes()));
     }
 
     #[test]
