@@ -29,7 +29,7 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc;
 #[cfg(not(feature = "std"))]
-use alloc::{vec::Vec, string::String};
+use alloc::{string::String, vec::Vec};
 
 use core::fmt;
 use core::iter;
@@ -58,8 +58,8 @@ pub trait ToHex {
     fn encode_hex_upper<T: iter::FromIterator<char>>(&self) -> T;
 }
 
-const HEX_CHARS_LOWER: &'static[u8; 16] = b"0123456789abcdef";
-const HEX_CHARS_UPPER: &'static[u8; 16] = b"0123456789ABCDEF";
+const HEX_CHARS_LOWER: &[u8; 16] = b"0123456789abcdef";
+const HEX_CHARS_UPPER: &[u8; 16] = b"0123456789ABCDEF";
 
 struct BytesToHexChars<'a> {
     inner: ::core::slice::Iter<'a, u8>,
@@ -71,7 +71,7 @@ impl<'a> BytesToHexChars<'a> {
     fn new(inner: &'a [u8], table: &'static [u8; 16]) -> BytesToHexChars<'a> {
         BytesToHexChars {
             inner: inner.iter(),
-            table: table,
+            table,
             next: None,
         }
     }
