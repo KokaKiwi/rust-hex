@@ -1,8 +1,20 @@
 language: rust
+os:
+  - linux
+  - windows
+  - osx
 rust:
   - stable
   - beta
   - nightly
+env:
+  global:
+    - RUST_BACKTRACE=1
+    - RUSTFLAGS="-D warnings"
 matrix:
   allow_failures:
     - rust: nightly
+
+script:
+  - cargo test
+  - cargo test --no-default-features
