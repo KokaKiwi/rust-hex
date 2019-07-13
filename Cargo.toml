@@ -11,4 +11,11 @@ edition = "2018"
 [features]
 default = ["std"]
 std = []
-benchmarks = []
+
+[[bench]]
+name = "hex"
+harness = false
+
+[dev-dependencies]
+criterion = "0.2"
+rustc-hex = "2.0"
