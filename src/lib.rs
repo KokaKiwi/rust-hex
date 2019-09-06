@@ -181,7 +181,7 @@ impl fmt::Display for FromHexError {
 ///     }
 /// }
 /// ```
-pub trait FromHex: Sized {
+pub trait FromHex: Sized? {
     type Error;
 
     /// Creates an instance of type `Self` from the given hex string, or fails
