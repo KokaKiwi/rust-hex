@@ -25,6 +25,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::unreadable_literal)]
+#![warn(clippy::use_self)]
 
 #[cfg(not(feature = "std"))]
 extern crate alloc;
