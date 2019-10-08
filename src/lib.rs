@@ -25,6 +25,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::unreadable_literal)]
+#![warn(clippy::use_self)]
 
 #[cfg(not(feature = "std"))]
 extern crate alloc;
@@ -142,9 +143,9 @@ pub enum FromHexError {
 impl std::error::Error for FromHexError {
     fn description(&self) -> &str {
         match *self {
-            FromHexError::InvalidHexCharacter { .. } => "invalid character",
-            FromHexError::OddLength => "odd number of digits",
-            FromHexError::InvalidStringLength => "invalid string length",
+            Self::InvalidHexCharacter { .. } => "invalid character",
+            Self::OddLength => "odd number of digits",
+            Self::InvalidStringLength => "invalid string length",
         }
     }
 }
@@ -152,11 +153,11 @@ impl std::error::Error for FromHexError {
 impl fmt::Display for FromHexError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            FromHexError::InvalidHexCharacter { c, index } => {
+            Self::InvalidHexCharacter { c, index } => {
                 write!(f, "Invalid character '{}' at position {}", c, index)
             }
-            FromHexError::OddLength => write!(f, "Odd number of digits"),
-            FromHexError::InvalidStringLength => write!(f, "Invalid string length"),
+            Self::OddLength => write!(f, "Odd number of digits"),
+            Self::InvalidStringLength => write!(f, "Invalid string length"),
         }
     }
 }
