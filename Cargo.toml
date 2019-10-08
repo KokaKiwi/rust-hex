@@ -17,6 +17,6 @@ name = "hex"
 harness = false
 
 [dev-dependencies]
-criterion = "0.2"
+criterion = "0.3"
 rustc-hex = "2.0"
-faster-hex = "0.3"
+faster-hex = "0.4"
