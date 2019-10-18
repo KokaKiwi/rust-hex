@@ -236,9 +236,15 @@ pub fn decode_to_slice<T: AsRef<[u8]>>(data: T, out: &mut [u8]) -> Result<(), Fr
 mod test {
     use super::*;
 
+    use crate::traits::{FromHex, ToHex};
+
     #[test]
     fn test_gen_iter() {
-        assert_eq!(generate_iter(5).collect::<Vec<_>>(), vec![(0, 1), (2, 3)]);
+        let mut result = Vec::new();
+        result.push((0, 1));
+        result.push((2, 3));
+
+        assert_eq!(generate_iter(5).collect::<Vec<_>>(), result);
     }
 
     #[test]
