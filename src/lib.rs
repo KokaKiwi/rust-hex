@@ -8,15 +8,12 @@
 // except according to those terms.
 //! Encoding and decoding hex strings.
 //!
-//! For most cases, you can simply use the `decode()`, `encode()` and
-//! `encode_upper()` functions. If you need a bit more control, use the traits
-//! `ToHex` and `FromHex` instead.
+//! For most cases, you can simply use the [`decode`], [`encode`] and
+//! [`encode_upper`] functions. If you need a bit more control, use the traits
+//! [`ToHex`] and [`FromHex`] instead.
 //!
 //! # Example
-//!
 //! ```
-//! extern crate hex;
-//!
 //! fn main() {
 //!     let hex_string = hex::encode("Hello world!");
 //!     println!("{}", hex_string); // Prints '48656c6c6f20776f726c6421'
@@ -50,7 +47,7 @@ struct BytesToHexChars<'a> {
 
 impl<'a> BytesToHexChars<'a> {
     fn new(inner: &'a [u8], table: &'static [u8; 16]) -> BytesToHexChars<'a> {
-        BytesToHexChars {
+        Self {
             inner: inner.iter(),
             table,
             next: None,
@@ -112,7 +109,6 @@ fn val(c: u8, idx: usize) -> Result<u8, FromHexError> {
 /// the input data.
 ///
 /// # Example
-///
 /// ```
 /// assert_eq!(hex::encode("Hello world!"), "48656c6c6f20776f726c6421");
 /// assert_eq!(hex::encode(vec![1, 2, 3, 15, 16]), "0102030f10");
