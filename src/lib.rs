@@ -123,11 +123,13 @@ pub fn encode<T: AsRef<[u8]>>(data: T) -> String {
 // (4, 5)
 // (6, 7)
 // ...
+#[inline]
 fn generate_iter(len: usize) -> impl Iterator<Item = (usize, usize)> {
     (0..len).step_by(2).zip((0..len).skip(1).step_by(2))
 }
 
 // the inverse of `val`.
+#[inline]
 fn byte2hex(byte: u8, table: &[u8; 16]) -> (u8, u8) {
     let high = table[((byte & 0xf0) >> 4) as usize];
     let low = table[(byte & 0x0f) as usize];
@@ -194,7 +196,10 @@ pub fn encode_upper<T: AsRef<[u8]>>(data: T) -> String {
 /// assert!(hex::decode("foo").is_err());
 /// ```
 pub fn decode<T: AsRef<[u8]>>(data: T) -> Result<Vec<u8>, FromHexError> {
-    FromHex::from_hex(data)
+    let mut result = vec![0; data.as_ref().len() / 2];
+    decode_to_slice(data, &mut result)?;
+
+    Ok(result)
 }
 
 /// Decode a hex string into a mutable bytes slice.
