@@ -117,12 +117,59 @@ pub fn encode<T: AsRef<[u8]>>(data: T) -> String {
     data.encode_hex()
 }
 
-/// Encodes `data` as hex string using uppercase characters.
+// generates an iterator like this
+// (0, 1)
+// (2, 3)
+// (4, 5)
+// (6, 7)
+// ...
+fn generate_iter(len: usize) -> impl Iterator<Item = (usize, usize)> {
+    (0..len).step_by(2).zip((0..len).skip(1).step_by(2))
+}
+
+// the inverse of `val`.
+fn byte2hex(byte: u8, table: &[u8; 16]) -> (u8, u8) {
+    let high = table[((byte & 0xf0) >> 4) as usize];
+    let low = table[(byte & 0x0f) as usize];
+
+    (high, low)
+}
+
+/// Encodes some bytes into a mutable slice of bytes.
 ///
-/// Apart from the characters' casing, this works exactly like `encode()`.
+/// The output buffer, has to be able to hold at least `input.len() * 2` bytes,
+/// otherwise this function will return an error.
 ///
 /// # Example
+/// ```
+/// # use hex::FromHexError;
+/// # fn main() -> Result<(), FromHexError> {
+/// let mut bytes = [0u8; 4 * 2];
 ///
+/// hex::encode_to_slice(b"kiwi", &mut bytes)?;
+/// assert_eq!(&bytes, b"6b697769");
+/// # Ok(())
+/// # }
+/// ```
+pub fn encode_to_slice(input: &[u8], output: &mut [u8]) -> Result<(), FromHexError> {
+    if input.len() * 2 != output.len() {
+        return Err(FromHexError::InvalidStringLength);
+    }
+
+    for (byte, (i, j)) in input.iter().zip(generate_iter(input.len() * 2)) {
+        let (high, low) = byte2hex(*byte, HEX_CHARS_LOWER);
+        output[i] = high;
+        output[j] = low;
+    }
+
+    Ok(())
+}
+
+/// Encodes `data` as hex string using uppercase characters.
+///
+/// Apart from the characters' casing, this works exactly like [`encode`].
+///
+/// # Example
 /// ```
 /// assert_eq!(hex::encode_upper("Hello world!"), "48656C6C6F20776F726C6421");
 /// assert_eq!(hex::encode_upper(vec![1, 2, 3, 15, 16]), "0102030F10");
@@ -181,6 +228,22 @@ pub fn decode_to_slice<T: AsRef<[u8]>>(data: T, out: &mut [u8]) -> Result<(), Fr
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn test_gen_iter() {
+        assert_eq!(generate_iter(5).collect::<Vec<_>>(), vec![(0, 1), (2, 3)]);
+    }
+
+    #[test]
+    fn test_encode_to_slice() {
+        let mut output_1 = [0; 4 * 2];
+        encode_to_slice(b"kiwi", &mut output_1).unwrap();
+        assert_eq!(&output_1, b"6b697769");
+
+        let mut output_2 = [0; 5 * 2];
+        encode_to_slice(b"kiwis", &mut output_2).unwrap();
+        assert_eq!(&output_2, b"6b69776973")
+    }
 
     #[test]
     fn test_encode() {
