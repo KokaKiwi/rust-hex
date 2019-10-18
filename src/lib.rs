@@ -13,6 +13,7 @@
 //! [`ToHex`] and [`FromHex`] instead.
 //!
 //! # Example
+//!
 //! ```
 //! fn main() {
 //!     let hex_string = hex::encode("Hello world!");
@@ -109,6 +110,7 @@ fn val(c: u8, idx: usize) -> Result<u8, FromHexError> {
 /// the input data.
 ///
 /// # Example
+///
 /// ```
 /// assert_eq!(hex::encode("Hello world!"), "48656c6c6f20776f726c6421");
 /// assert_eq!(hex::encode(vec![1, 2, 3, 15, 16]), "0102030f10");
@@ -143,6 +145,7 @@ fn byte2hex(byte: u8, table: &[u8; 16]) -> (u8, u8) {
 /// otherwise this function will return an error.
 ///
 /// # Example
+///
 /// ```
 /// # use hex::FromHexError;
 /// # fn main() -> Result<(), FromHexError> {
@@ -186,6 +189,7 @@ pub fn encode_upper<T: AsRef<[u8]>>(data: T) -> String {
 /// even be mixed (e.g. `f9b4ca`, `F9B4CA` and `f9B4Ca` are all valid strings).
 ///
 /// # Example
+///
 /// ```
 /// assert_eq!(
 ///     hex::decode("48656c6c6f20776f726c6421"),
@@ -196,10 +200,7 @@ pub fn encode_upper<T: AsRef<[u8]>>(data: T) -> String {
 /// assert!(hex::decode("foo").is_err());
 /// ```
 pub fn decode<T: AsRef<[u8]>>(data: T) -> Result<Vec<u8>, FromHexError> {
-    let mut result = vec![0; data.as_ref().len() / 2];
-    decode_to_slice(data, &mut result)?;
-
-    Ok(result)
+    FromHex::from_hex(data)
 }
 
 /// Decode a hex string into a mutable bytes slice.
@@ -208,6 +209,7 @@ pub fn decode<T: AsRef<[u8]>>(data: T) -> Result<Vec<u8>, FromHexError> {
 /// even be mixed (e.g. `f9b4ca`, `F9B4CA` and `f9B4Ca` are all valid strings).
 ///
 /// # Example
+///
 /// ```
 /// let mut bytes = [0u8; 4];
 /// assert_eq!(hex::decode_to_slice("6b697769", &mut bytes as &mut [u8]), Ok(()));
