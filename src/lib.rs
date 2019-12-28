@@ -23,6 +23,7 @@
 //! }
 //! ```
 
+#![doc(html_root_url = "https://docs.rs/hex/0.4.0")]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::unreadable_literal)]
 #![warn(clippy::use_self)]
