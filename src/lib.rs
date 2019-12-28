@@ -8,19 +8,17 @@
 // except according to those terms.
 //! Encoding and decoding hex strings.
 //!
-//! For most cases, you can simply use the `decode()`, `encode()` and
-//! `encode_upper()` functions. If you need a bit more control, use the traits
-//! `ToHex` and `FromHex` instead.
+//! For most cases, you can simply use the [`decode()`], [`encode()`] and
+//! [`encode_upper()`] functions. If you need a bit more control, use the traits
+//! [`ToHex`] and [`FromHex`] instead.
 //!
 //! # Example
 //!
 //! ```
-//! extern crate hex;
+//! let hex_string = hex::encode("Hello world!");
 //!
-//! fn main() {
-//!     let hex_string = hex::encode("Hello world!");
-//!     println!("{}", hex_string); // Prints '48656c6c6f20776f726c6421'
-//! }
+//! println!("{}", hex_string); // Prints "48656c6c6f20776f726c6421"
+//! # assert_eq!(hex_string, "48656c6c6f20776f726c6421");
 //! ```
 
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -46,9 +44,10 @@ use core::iter;
 /// use hex::ToHex;
 ///
 /// println!("{}", "Hello world!".encode_hex::<String>());
+/// # assert_eq!("Hello world!".encode_hex::<String>(), "48656c6c6f20776f726c6421".to_string());
 /// ```
 ///
-/// *Note*: instead of using this trait, you might want to use `encode()`.
+/// *Note*: instead of using this trait, you might want to use [`encode()`].
 pub trait ToHex {
     /// Encode the hex strict representing `self` into the result.. Lower case
     /// letters are used (e.g. `f9b4ca`)
@@ -298,6 +297,7 @@ pub fn encode_upper<T: AsRef<[u8]>>(data: T) -> String {
 /// even be mixed (e.g. `f9b4ca`, `F9B4CA` and `f9B4Ca` are all valid strings).
 ///
 /// # Example
+///
 /// ```
 /// assert_eq!(
 ///     hex::decode("48656c6c6f20776f726c6421"),
@@ -317,6 +317,7 @@ pub fn decode<T: AsRef<[u8]>>(data: T) -> Result<Vec<u8>, FromHexError> {
 /// even be mixed (e.g. `f9b4ca`, `F9B4CA` and `f9B4Ca` are all valid strings).
 ///
 /// # Example
+///
 /// ```
 /// let mut bytes = [0u8; 4];
 /// assert_eq!(hex::decode_to_slice("6b697769", &mut bytes as &mut [u8]), Ok(()));
