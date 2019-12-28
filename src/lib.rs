@@ -374,12 +374,16 @@ fn byte2hex(byte: u8, table: &[u8; 16]) -> (u8, u8) {
 /// # Ok(())
 /// # }
 /// ```
-pub fn encode_to_slice(input: &[u8], output: &mut [u8]) -> Result<(), FromHexError> {
-    if input.len() * 2 != output.len() {
+pub fn encode_to_slice<T: AsRef<[u8]>>(input: T, output: &mut [u8]) -> Result<(), FromHexError> {
+    if input.as_ref().len() * 2 != output.len() {
         return Err(FromHexError::InvalidStringLength);
     }
 
-    for (byte, (i, j)) in input.iter().zip(generate_iter(input.len() * 2)) {
+    for (byte, (i, j)) in input
+        .as_ref()
+        .iter()
+        .zip(generate_iter(input.as_ref().len() * 2))
+    {
         let (high, low) = byte2hex(*byte, HEX_CHARS_LOWER);
         output[i] = high;
         output[j] = low;
