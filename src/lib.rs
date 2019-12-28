@@ -8,8 +8,8 @@
 // except according to those terms.
 //! Encoding and decoding hex strings.
 //!
-//! For most cases, you can simply use the [`decode()`], [`encode()`] and
-//! [`encode_upper()`] functions. If you need a bit more control, use the traits
+//! For most cases, you can simply use the [`decode`], [`encode`] and
+//! [`encode_upper`] functions. If you need a bit more control, use the traits
 //! [`ToHex`] and [`FromHex`] instead.
 //!
 //! # Example
