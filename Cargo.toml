@@ -7,6 +7,12 @@ license = "MIT OR Apache-2.0"
 documentation = "https://docs.rs/hex/"
 repository = "https://github.com/KokaKiwi/rust-hex"
 edition = "2018"
+readme = "README.md"
+keywords = ["no_std", "hex"]
+categories = ["encoding", "no-std"]
+
+[badges]
+travis-ci = { repository = "KokaKiwi/rust-hex", branch = "master" }
 
 [features]
 default = ["std"]
