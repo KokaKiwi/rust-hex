@@ -26,3 +26,4 @@ harness = false
 criterion = "0.3"
 rustc-hex = "2.0"
 faster-hex = "0.4"
+version-sync = "0.8"
