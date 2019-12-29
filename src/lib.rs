@@ -359,6 +359,8 @@ pub fn encode_to_slice<T: AsRef<[u8]>>(input: T, output: &mut [u8]) -> Result<()
 #[cfg(test)]
 mod test {
     use super::*;
+    #[cfg(not(feature = "std"))]
+    use alloc::string::ToString;
     use pretty_assertions::assert_eq;
 
     #[test]

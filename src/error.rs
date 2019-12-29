@@ -35,6 +35,8 @@ impl fmt::Display for FromHexError {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(not(feature = "std"))]
+    use alloc::string::ToString;
     use pretty_assertions::assert_eq;
 
     #[test]
