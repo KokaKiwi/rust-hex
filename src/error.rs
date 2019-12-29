@@ -18,15 +18,7 @@ pub enum FromHexError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for FromHexError {
-    fn description(&self) -> &str {
-        match *self {
-            Self::InvalidHexCharacter { .. } => "invalid character",
-            Self::OddLength => "odd number of digits",
-            Self::InvalidStringLength => "invalid string length",
-        }
-    }
-}
+impl std::error::Error for FromHexError {}
 
 impl fmt::Display for FromHexError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -44,24 +36,6 @@ impl fmt::Display for FromHexError {
 mod tests {
     use super::*;
     use pretty_assertions::assert_eq;
-    use std::error::Error;
-
-    #[test]
-    fn test_description() {
-        assert_eq!(
-            FromHexError::InvalidHexCharacter { c: '\n', index: 5 }.description(),
-            "invalid character"
-        );
-
-        assert_eq!(
-            FromHexError::OddLength.description(),
-            "odd number of digits"
-        );
-        assert_eq!(
-            FromHexError::InvalidStringLength.description(),
-            "invalid string length"
-        );
-    }
 
     #[test]
     fn test_display() {
