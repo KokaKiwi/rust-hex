@@ -39,3 +39,41 @@ impl fmt::Display for FromHexError {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use pretty_assertions::assert_eq;
+    use std::error::Error;
+
+    #[test]
+    fn test_description() {
+        assert_eq!(
+            FromHexError::InvalidHexCharacter { c: '\n', index: 5 }.description(),
+            "invalid character"
+        );
+
+        assert_eq!(
+            FromHexError::OddLength.description(),
+            "odd number of digits"
+        );
+        assert_eq!(
+            FromHexError::InvalidStringLength.description(),
+            "invalid string length"
+        );
+    }
+
+    #[test]
+    fn test_display() {
+        assert_eq!(
+            FromHexError::InvalidHexCharacter { c: '\n', index: 5 }.to_string(),
+            "Invalid character '\n' at position 5"
+        );
+
+        assert_eq!(FromHexError::OddLength.to_string(), "Odd number of digits");
+        assert_eq!(
+            FromHexError::InvalidStringLength.to_string(),
+            "Invalid string length"
+        );
+    }
+}

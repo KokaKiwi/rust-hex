@@ -359,6 +359,7 @@ pub fn encode_to_slice<T: AsRef<[u8]>>(input: T, output: &mut [u8]) -> Result<()
 #[cfg(test)]
 mod test {
     use super::*;
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn test_gen_iter() {
@@ -377,7 +378,32 @@ mod test {
 
         let mut output_2 = [0; 5 * 2];
         encode_to_slice(b"kiwis", &mut output_2).unwrap();
-        assert_eq!(&output_2, b"6b69776973")
+        assert_eq!(&output_2, b"6b69776973");
+
+        let mut output_3 = [0; 100];
+
+        assert_eq!(
+            encode_to_slice(b"kiwis", &mut output_3),
+            Err(FromHexError::InvalidStringLength)
+        );
+    }
+
+    #[test]
+    fn test_decode_to_slice() {
+        let mut output_1 = [0; 4];
+        decode_to_slice(b"6b697769", &mut output_1).unwrap();
+        assert_eq!(&output_1, b"kiwi");
+
+        let mut output_2 = [0; 5];
+        decode_to_slice(b"6b69776973", &mut output_2).unwrap();
+        assert_eq!(&output_2, b"kiwis");
+
+        let mut output_3 = [0; 4];
+
+        assert_eq!(
+            decode_to_slice(b"6", &mut output_3),
+            Err(FromHexError::OddLength)
+        );
     }
 
     #[test]
@@ -445,6 +471,19 @@ mod test {
         assert_eq!(
             <[u8; 5] as FromHex>::from_hex("666f6f626172"),
             Err(FromHexError::InvalidStringLength)
+        );
+    }
+
+    #[test]
+    fn test_to_hex() {
+        assert_eq!(
+            [0x66, 0x6f, 0x6f, 0x62, 0x61, 0x72].encode_hex::<String>(),
+            "666f6f626172".to_string(),
+        );
+
+        assert_eq!(
+            [0x66, 0x6f, 0x6f, 0x62, 0x61, 0x72].encode_hex_upper::<String>(),
+            "666F6F626172".to_string(),
         );
     }
 }
