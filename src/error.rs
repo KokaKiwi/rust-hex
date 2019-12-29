@@ -24,7 +24,7 @@ impl fmt::Display for FromHexError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Self::InvalidHexCharacter { c, index } => {
-                write!(f, "Invalid character '{}' at position {}", c, index)
+                write!(f, "Invalid character {:?} at position {}", c, index)
             }
             Self::OddLength => write!(f, "Odd number of digits"),
             Self::InvalidStringLength => write!(f, "Invalid string length"),
@@ -41,7 +41,7 @@ mod tests {
     fn test_display() {
         assert_eq!(
             FromHexError::InvalidHexCharacter { c: '\n', index: 5 }.to_string(),
-            "Invalid character '\n' at position 5"
+            "Invalid character '\\n' at position 5"
         );
 
         assert_eq!(FromHexError::OddLength.to_string(), "Odd number of digits");
