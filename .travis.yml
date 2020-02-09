@@ -23,6 +23,7 @@ script:
   - if [[ $TRAVIS_RUST_VERSION == "stable" && $TRAVIS_OS_NAME == "linux" ]]; then cargo fmt -- --check; fi
   - if [[ $TRAVIS_RUST_VERSION == "stable" && $TRAVIS_OS_NAME == "linux" ]]; then cargo clippy -- -D clippy::all; fi
   - cargo test
+  - cargo test --features serde
   - cargo test --no-default-features
   # Validate benches still work.
   - cargo bench --all -- --test

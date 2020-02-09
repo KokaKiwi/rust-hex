@@ -113,6 +113,7 @@ test:rust-stable:
     - compile:rust-stable
   script:
     - cargo test
+    - cargo test --features serde
     - cargo test --no-default-features
   variables:
     RUST_KEY: rust-stable
@@ -124,6 +125,7 @@ test:rust-stable-musl:
     - compile:rust-stable-musl
   script:
     - cargo test
+    - cargo test --features serde
     - cargo test --no-default-features
   variables:
     RUST_KEY: rust-stable-musl
@@ -135,6 +137,7 @@ test:rust-beta:
     - compile:rust-beta
   script:
     - cargo test
+    - cargo test --features serde
     - cargo test --no-default-features
   variables:
     RUST_KEY: rust-beta
@@ -146,6 +149,7 @@ test:rust-beta-musl:
     - compile:rust-beta-musl
   script:
     - cargo test
+    - cargo test --features serde
     - cargo test --no-default-features
   variables:
     RUST_KEY: rust-beta-musl
@@ -157,6 +161,7 @@ test:rust-nightly:
     - compile:rust-nightly
   script:
     - cargo test
+    - cargo test --features serde
     - cargo test --no-default-features
   variables:
     RUST_KEY: rust-nightly
@@ -169,6 +174,7 @@ test:rust-nightly-musl:
     - compile:rust-nightly-musl
   script:
     - cargo test
+    - cargo test --features serde
     - cargo test --no-default-features
   variables:
     RUST_KEY: rust-nightly-musl
