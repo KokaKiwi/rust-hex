@@ -23,6 +23,7 @@
 
 #![doc(html_root_url = "https://docs.rs/hex/0.4.0")]
 #![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![allow(clippy::unreadable_literal)]
 #![warn(clippy::use_self)]
 
@@ -35,6 +36,12 @@ use core::iter;
 
 mod error;
 pub use error::FromHexError;
+
+#[cfg(feature = "serde")]
+#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
+pub mod serde;
+#[cfg(feature = "serde")]
+pub use crate::serde::{deserialize, serialize, serialize_upper};
 
 /// Encoding values as hex string.
 ///
