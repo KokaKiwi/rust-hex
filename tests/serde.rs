@@ -19,7 +19,7 @@ fn serialize() {
 }
 
 #[test]
-fn dserialize() {
+fn deserialize() {
     let foo = Foo {
         bar: vec![1, 10, 100],
     };
@@ -48,7 +48,7 @@ fn serialize_upper() {
 }
 
 #[test]
-fn dserialize_upper() {
+fn deserialize_upper() {
     let bar = Bar {
         foo: vec![1, 10, 100],
     };
