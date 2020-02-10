@@ -2,7 +2,8 @@ hex
 ===
 [![Crates.io: hex](https://img.shields.io/crates/v/hex.svg)](https://crates.io/crates/hex)
 [![Documentation](https://docs.rs/hex/badge.svg)](https://docs.rs/hex)
-[![Build Status](https://travis-ci.org/KokaKiwi/rust-hex.svg?branch=master)](https://travis-ci.org/KokaKiwi/rust-hex)
+[![Build Status (Travis)](https://travis-ci.org/KokaKiwi/rust-hex.svg?branch=master)](https://travis-ci.org/KokaKiwi/rust-hex)
+[![Build Status (Github Actions)](https://github.com/KokaKiwi/rust-hex/workflows/Test%20hex/badge.svg?master)](https://github.com/KokaKiwi/rust-hex/actions)
 
 Encoding and decoding data into/from hexadecimal representation.
 
@@ -33,7 +34,8 @@ hex = "0.4"
 ```
 
 By default this will import `std`, if you are working in a
-[`no_std`](https://rust-embedded.github.io/book/intro/no-std.html) environment you can turn this off by adding the following
+[`no_std`](https://rust-embedded.github.io/book/intro/no-std.html)
+environment you can turn this off by adding the following
 
 ```toml
 [dependencies]
@@ -42,8 +44,11 @@ hex = { version = "0.4", default-features = false }
 
 ## Features
 
-This crate has only one feature right now, `std`, which is enabled by default and can be
-disabled with `default-features = false` ([see here](#Installation)).
+- `std`:
+    Enabled by default. Add support for Rust's libstd types.
+- `serde`:
+    Disabled by default. Add support for `serde` de/serializing library.
+    See the `serde` module documentation for usage.
 
 ## License
 

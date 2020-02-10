@@ -1,5 +1,5 @@
 // Copyright (c) 2013-2014 The Rust Project Developers.
-// Copyright (c) 2015-2018 The rust-hex Developers.
+// Copyright (c) 2015-2020 The rust-hex Developers.
 //
 // Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
 // http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
