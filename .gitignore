@@ -5,6 +5,6 @@ Cargo.lock
 # Misc stuff
 .*
 !.gitignore
-!.travis.yml
-!.gitlab-ci.yml
-!.gitlab-ci-matrix.yml
+!.*.toml
+!.*.yaml
+!.*.yml

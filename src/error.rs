@@ -23,11 +23,11 @@ impl std::error::Error for FromHexError {}
 impl fmt::Display for FromHexError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Self::InvalidHexCharacter { c, index } => {
+            FromHexError::InvalidHexCharacter { c, index } => {
                 write!(f, "Invalid character {:?} at position {}", c, index)
             }
-            Self::OddLength => write!(f, "Odd number of digits"),
-            Self::InvalidStringLength => write!(f, "Invalid string length"),
+            FromHexError::OddLength => write!(f, "Odd number of digits"),
+            FromHexError::InvalidStringLength => write!(f, "Invalid string length"),
         }
     }
 }

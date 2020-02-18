@@ -18,6 +18,7 @@
 //! let hex_string = hex::encode("Hello world!");
 //!
 //! println!("{}", hex_string); // Prints "48656c6c6f20776f726c6421"
+//!
 //! # assert_eq!(hex_string, "48656c6c6f20776f726c6421");
 //! ```
 
@@ -25,7 +26,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![allow(clippy::unreadable_literal)]
-#![warn(clippy::use_self)]
 
 #[cfg(not(feature = "std"))]
 extern crate alloc;
@@ -35,7 +35,7 @@ use alloc::{string::String, vec::Vec};
 use core::iter;
 
 mod error;
-pub use error::FromHexError;
+pub use crate::error::FromHexError;
 
 #[cfg(feature = "serde")]
 #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
@@ -350,11 +350,7 @@ pub fn encode_to_slice<T: AsRef<[u8]>>(input: T, output: &mut [u8]) -> Result<()
         return Err(FromHexError::InvalidStringLength);
     }
 
-    for (byte, (i, j)) in input
-        .as_ref()
-        .iter()
-        .zip(generate_iter(input.as_ref().len() * 2))
-    {
+    for (byte, (i, j)) in input.as_ref().iter().zip(generate_iter(input.as_ref().len() * 2)) {
         let (high, low) = byte2hex(*byte, HEX_CHARS_LOWER);
         output[i] = high;
         output[j] = low;
@@ -409,10 +405,7 @@ mod test {
 
         let mut output_3 = [0; 4];
 
-        assert_eq!(
-            decode_to_slice(b"6", &mut output_3),
-            Err(FromHexError::OddLength)
-        );
+        assert_eq!(decode_to_slice(b"6", &mut output_3), Err(FromHexError::OddLength));
     }
 
     #[test]
@@ -422,10 +415,7 @@ mod test {
 
     #[test]
     fn test_decode() {
-        assert_eq!(
-            decode("666f6f626172"),
-            Ok(String::from("foobar").into_bytes())
-        );
+        assert_eq!(decode("666f6f626172"), Ok(String::from("foobar").into_bytes()));
     }
 
     #[test]
@@ -443,10 +433,7 @@ mod test {
     #[test]
     pub fn test_invalid_length() {
         assert_eq!(Vec::from_hex("1").unwrap_err(), FromHexError::OddLength);
-        assert_eq!(
-            Vec::from_hex("666f6f6261721").unwrap_err(),
-            FromHexError::OddLength
-        );
+        assert_eq!(Vec::from_hex("666f6f6261721").unwrap_err(), FromHexError::OddLength);
     }
 
     #[test]
