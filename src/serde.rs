@@ -87,14 +87,14 @@ where
         where
             E: Error,
         {
-            FromHex::from_hex(data).map_err(|e| Error::custom(e))
+            FromHex::from_hex(data).map_err(Error::custom)
         }
 
         fn visit_borrowed_str<E>(self, data: &'de str) -> Result<Self::Value, E>
         where
             E: Error,
         {
-            FromHex::from_hex(data).map_err(|e| Error::custom(e))
+            FromHex::from_hex(data).map_err(Error::custom)
         }
     }
 

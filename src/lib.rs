@@ -107,7 +107,7 @@ impl<'a> Iterator for BytesToHexChars<'a> {
             Some(current) => Some(current),
             None => self.inner.next().map(|byte| {
                 let current = self.table[(byte >> 4) as usize] as char;
-                self.next = Some(self.table[(byte & 0xf) as usize] as char);
+                self.next = Some(self.table[(byte & 0x0F) as usize] as char);
                 current
             }),
         }
@@ -129,6 +129,7 @@ impl<'a> iter::ExactSizeIterator for BytesToHexChars<'a> {
     }
 }
 
+#[inline]
 fn encode_to_iter<T: iter::FromIterator<char>>(table: &'static [u8; 16], source: &[u8]) -> T {
     BytesToHexChars::new(source, table).collect()
 }
@@ -208,7 +209,7 @@ macro_rules! from_hex_array_impl {
             type Error = FromHexError;
 
             fn from_hex<T: AsRef<[u8]>>(hex: T) -> Result<Self, Self::Error> {
-                let mut out = [0u8; $len];
+                let mut out = [0_u8; $len];
                 decode_to_slice(hex, &mut out as &mut [u8])?;
                 Ok(out)
             }
@@ -253,6 +254,7 @@ from_hex_array_impl! {
 /// assert_eq!(hex::encode("Hello world!"), "48656c6c6f20776f726c6421");
 /// assert_eq!(hex::encode(vec![1, 2, 3, 15, 16]), "0102030f10");
 /// ```
+#[must_use]
 #[cfg(feature = "alloc")]
 pub fn encode<T: AsRef<[u8]>>(data: T) -> String {
     data.encode_hex()
@@ -268,6 +270,7 @@ pub fn encode<T: AsRef<[u8]>>(data: T) -> String {
 /// assert_eq!(hex::encode_upper("Hello world!"), "48656C6C6F20776F726C6421");
 /// assert_eq!(hex::encode_upper(vec![1, 2, 3, 15, 16]), "0102030F10");
 /// ```
+#[must_use]
 #[cfg(feature = "alloc")]
 pub fn encode_upper<T: AsRef<[u8]>>(data: T) -> String {
     data.encode_hex_upper()
@@ -329,11 +332,14 @@ pub fn decode_to_slice<T: AsRef<[u8]>>(data: T, out: &mut [u8]) -> Result<(), Fr
 // (4, 5)
 // (6, 7)
 // ...
+#[inline]
 fn generate_iter(len: usize) -> impl Iterator<Item = (usize, usize)> {
     (0..len).step_by(2).zip((0..len).skip(1).step_by(2))
 }
 
 // the inverse of `val`.
+#[inline]
+#[must_use]
 fn byte2hex(byte: u8, table: &[u8; 16]) -> (u8, u8) {
     let high = table[((byte & 0xf0) >> 4) as usize];
     let low = table[(byte & 0x0f) as usize];
