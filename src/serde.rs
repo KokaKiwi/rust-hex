@@ -1,28 +1,41 @@
 //! Hex encoding with `serde`.
 //!
-//! # Example
-//!
-//! ```
-//! use serde::{Serialize, Deserialize};
-//!
-//! #[derive(Serialize, Deserialize)]
-//! struct Foo {
-//!     #[serde(with = "hex")]
-//!     bar: Vec<u8>,
-//! }
-//! ```
-//!
+#[cfg_attr(
+    all(feature = "alloc", feature = "serde"),
+    doc = r##"
+# Example
+
+```
+use serde::{Serialize, Deserialize};
+
+#[derive(Serialize, Deserialize)]
+struct Foo {
+    #[serde(with = "hex")]
+    bar: Vec<u8>,
+}
+```
+"##
+)]
 use serde::de::{Error, Visitor};
-use serde::{Deserializer, Serializer};
+use serde::Deserializer;
+#[cfg(feature = "alloc")]
+use serde::Serializer;
 
-use std::fmt;
-use std::marker::PhantomData;
+#[cfg(feature = "alloc")]
+use alloc::string::String;
 
-use crate::{FromHex, ToHex};
+use core::fmt;
+use core::marker::PhantomData;
+
+use crate::FromHex;
+
+#[cfg(feature = "alloc")]
+use crate::ToHex;
 
 /// Serializes `data` as hex string using uppercase characters.
 ///
 /// Apart from the characters' casing, this works exactly like `serialize()`.
+#[cfg(feature = "alloc")]
 pub fn serialize_upper<S, T>(data: T, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
@@ -37,6 +50,7 @@ where
 /// Lowercase characters are used (e.g. `f9b4ca`). The resulting string's length
 /// is always even, each byte in data is always encoded using two hex digits.
 /// Thus, the resulting string contains exactly twice as many bytes as the input data.
+#[cfg(feature = "alloc")]
 pub fn serialize<S, T>(data: T, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
