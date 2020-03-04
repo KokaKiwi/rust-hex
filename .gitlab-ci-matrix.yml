@@ -22,6 +22,9 @@ steps:
     script:
       - cargo test
       - cargo test --no-default-features
+      - cargo test --no-default-features --features alloc
+      - cargo test --no-default-features --features std
+      - cargo test --no-default-features --features serde
     dependencies:
       - compile
 
