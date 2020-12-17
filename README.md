@@ -13,7 +13,7 @@ Encoding a `String`
 ```rust
 let hex_string = hex::encode("Hello world!");
 
-println!("{}", hex_string); // Prints "48656c6c6f20776f726c6421"
+println!("{:?}", hex_string); // Prints "48656c6c6f20776f726c6421"
 ```
 
 Decoding a `String`
