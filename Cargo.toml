@@ -16,8 +16,8 @@ travis-ci = { repository = "KokaKiwi/rust-hex", branch = "master" }
 
 [features]
 default = ["std"]
-alloc = ["serde/alloc"]
-std = ["alloc", "serde/std"]
+alloc = []
+std = ["alloc"]
 
 [[bench]]
 name = "hex"
