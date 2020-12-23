@@ -115,6 +115,9 @@ test:rust-stable:
     - cargo test
     - cargo test --features serde
     - cargo test --no-default-features
+    - cargo test --no-default-features --features std
+    - cargo test --no-default-features --features alloc
+    - cargo test --no-default-features --features serde
   variables:
     RUST_KEY: rust-stable
 
@@ -127,6 +130,9 @@ test:rust-stable-musl:
     - cargo test
     - cargo test --features serde
     - cargo test --no-default-features
+    - cargo test --no-default-features --features std
+    - cargo test --no-default-features --features alloc
+    - cargo test --no-default-features --features serde
   variables:
     RUST_KEY: rust-stable-musl
 
@@ -139,6 +145,9 @@ test:rust-beta:
     - cargo test
     - cargo test --features serde
     - cargo test --no-default-features
+    - cargo test --no-default-features --features std
+    - cargo test --no-default-features --features alloc
+    - cargo test --no-default-features --features serde
   variables:
     RUST_KEY: rust-beta
 
@@ -151,6 +160,9 @@ test:rust-beta-musl:
     - cargo test
     - cargo test --features serde
     - cargo test --no-default-features
+    - cargo test --no-default-features --features std
+    - cargo test --no-default-features --features alloc
+    - cargo test --no-default-features --features serde
   variables:
     RUST_KEY: rust-beta-musl
 
@@ -163,6 +175,9 @@ test:rust-nightly:
     - cargo test
     - cargo test --features serde
     - cargo test --no-default-features
+    - cargo test --no-default-features --features std
+    - cargo test --no-default-features --features alloc
+    - cargo test --no-default-features --features serde
   variables:
     RUST_KEY: rust-nightly
   allow_failure: true
@@ -176,7 +191,9 @@ test:rust-nightly-musl:
     - cargo test
     - cargo test --features serde
     - cargo test --no-default-features
+    - cargo test --no-default-features --features std
+    - cargo test --no-default-features --features alloc
+    - cargo test --no-default-features --features serde
   variables:
     RUST_KEY: rust-nightly-musl
   allow_failure: true
-

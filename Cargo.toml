@@ -16,14 +16,15 @@ travis-ci = { repository = "KokaKiwi/rust-hex", branch = "master" }
 
 [features]
 default = ["std"]
-std = []
+alloc = []
+std = ["alloc"]
 
 [[bench]]
 name = "hex"
 harness = false
 
 [dependencies]
-serde = { version = "1.0", optional = true }
+serde = { version = "1.0", default-features = false, optional = true }
 
 [dev-dependencies]
 criterion = "0.3"

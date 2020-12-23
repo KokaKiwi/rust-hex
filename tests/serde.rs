@@ -1,4 +1,4 @@
-#![cfg(feature = "serde")]
+#![cfg(all(feature = "serde", feature = "alloc"))]
 
 use serde::{Deserialize, Serialize};
 
