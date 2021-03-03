@@ -2,7 +2,7 @@ name: Test hex
 on: [push, pull_request]
 
 env:
-  RUST_BACKTRACE: '1'
+  RUST_BACKTRACE: "1"
   RUSTFLAGS: -D warnings
 
 jobs:
@@ -28,5 +28,7 @@ jobs:
         run: cargo test --verbose --no-default-features
       - name: Run tests [serde]
         run: cargo test --verbose --features serde
+      - name: Run tests [alloc]
+        run: cargo test --verbose --no-default-features --features alloc
       - name: Validate benches still work
         run: cargo bench --all -- --test

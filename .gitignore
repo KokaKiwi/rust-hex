@@ -2,9 +2,13 @@
 /target
 Cargo.lock
 
+# Working stuff
+Justfile
+
 # Misc stuff
 .*
 !.gitignore
+!.github
 !.*.toml
 !.*.yaml
 !.*.yml
