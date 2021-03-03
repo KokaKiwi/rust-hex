@@ -151,8 +151,8 @@ impl<T: AsRef<[u8]>> ToHex for T {
 /// # Example
 ///
 /// ```
-/// use hex::FromHex;
 /// use core::str;
+/// use hex::FromHex;
 ///
 /// let buffer = <[u8; 12]>::from_hex("48656c6c6f20776f726c6421")?;
 /// let string = str::from_utf8(&buffer).expect("invalid buffer length");
@@ -392,9 +392,7 @@ mod test {
     #[test]
     #[cfg(feature = "alloc")]
     fn test_gen_iter() {
-        let mut result = Vec::new();
-        result.push((0, 1));
-        result.push((2, 3));
+        let result = vec![(0, 1), (2, 3)];
 
         assert_eq!(generate_iter(5).collect::<Vec<_>>(), result);
     }
