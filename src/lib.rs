@@ -387,6 +387,8 @@ mod test {
     use super::*;
     #[cfg(feature = "alloc")]
     use alloc::string::ToString;
+    #[cfg(feature = "alloc")]
+    use alloc::vec;
     use pretty_assertions::assert_eq;
 
     #[test]
