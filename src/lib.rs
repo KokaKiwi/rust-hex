@@ -32,7 +32,7 @@
 //! # assert_eq!(hex_string, "48656c6c6f20776f726c6421");
 //! ```
 
-#![doc(html_root_url = "https://docs.rs/hex/0.4.2")]
+#![doc(html_root_url = "https://docs.rs/hex/0.4.3")]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![allow(clippy::unreadable_literal)]
