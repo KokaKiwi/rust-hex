@@ -2,7 +2,6 @@ hex
 ===
 [![Crates.io: hex](https://img.shields.io/crates/v/hex.svg)](https://crates.io/crates/hex)
 [![Documentation](https://docs.rs/hex/badge.svg)](https://docs.rs/hex)
-[![Build Status (Travis)](https://travis-ci.org/KokaKiwi/rust-hex.svg?branch=master)](https://travis-ci.org/KokaKiwi/rust-hex)
 [![Build Status (Github Actions)](https://github.com/KokaKiwi/rust-hex/workflows/Test%20hex/badge.svg?master)](https://github.com/KokaKiwi/rust-hex/actions)
 
 Encoding and decoding data into/from hexadecimal representation.
