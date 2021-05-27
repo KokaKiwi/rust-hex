@@ -7,7 +7,7 @@
 [![codecov-svg]][codecov-url]
 [![deps-svg]][deps-url]
 
-[ga-svg]: https://github.com/KokaKiwi/rust-hex/workflows/Build/badge.svg
+[ga-svg]: https://github.com/KokaKiwi/rust-hex/workflows/build/badge.svg
 [ga-url]: https://github.com/KokaKiwi/rust-hex/actions
 [crates-svg]: https://img.shields.io/crates/v/hex.svg
 [crates-url]: https://crates.io/crates/hex
