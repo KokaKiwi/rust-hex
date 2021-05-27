@@ -1,8 +1,24 @@
 # hex
 
-[![Crates.io: hex](https://img.shields.io/crates/v/hex.svg)](https://crates.io/crates/hex)
-[![Documentation](https://docs.rs/hex/badge.svg)](https://docs.rs/hex)
-[![Build Status (Github Actions)](https://github.com/KokaKiwi/rust-hex/workflows/Test%20hex/badge.svg?master)](https://github.com/KokaKiwi/rust-hex/actions)
+[![ga-svg]][ga-url]
+[![crates-svg]][crates-url]
+[![docs-svg]][docs-url]
+[![msrv-svg]][msrv-url]
+[![codecov-svg]][codecov-url]
+[![deps-svg]][deps-url]
+
+[ga-svg]: https://github.com/KokaKiwi/rust-hex/workflows/Build/badge.svg
+[ga-url]: https://github.com/KokaKiwi/rust-hex/actions
+[crates-svg]: https://img.shields.io/crates/v/hex.svg
+[crates-url]: https://crates.io/crates/hex
+[docs-svg]: https://docs.rs/hex/badge.svg
+[docs-url]: https://docs.rs/hex
+[msrv-svg]: https://img.shields.io/badge/rustc-1.36+-blue.svg
+[msrv-url]: https://blog.rust-lang.org/2019/07/04/Rust-1.36.0.html
+[codecov-svg]: https://img.shields.io/codecov/c/github/KokaKiwi/rust-hex
+[codecov-url]: https://codecov.io/gh/KokaKiwi/rust-hex
+[deps-svg]: https://deps.rs/repo/github/KokaKiwi/rust-hex/status.svg
+[deps-url]: https://deps.rs/repo/github/KokaKiwi/rust-hex
 
 Encoding and decoding data into/from hexadecimal representation.
 
