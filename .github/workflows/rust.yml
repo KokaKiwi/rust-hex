@@ -108,7 +108,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --default-features --features 'alloc, serde'
+          args: --no-default-features --features 'alloc, serde'
 
   coverage:
     name: Code Coverage
