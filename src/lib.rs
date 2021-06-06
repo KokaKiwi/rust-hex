@@ -349,7 +349,7 @@ fn byte2hex(byte: u8, table: &[u8; 16]) -> (u8, u8) {
 
 /// Encodes some bytes into a mutable slice of bytes.
 ///
-/// The output buffer, has to be able to hold at least `input.len() * 2` bytes,
+/// The output buffer, has to be able to hold exactly `input.len() * 2` bytes,
 /// otherwise this function will return an error.
 ///
 /// # Example
@@ -361,6 +361,22 @@ fn byte2hex(byte: u8, table: &[u8; 16]) -> (u8, u8) {
 ///
 /// hex::encode_to_slice(b"kiwi", &mut bytes)?;
 /// assert_eq!(&bytes, b"6b697769");
+/// # Ok(())
+/// # }
+/// ```
+///
+/// If the buffer is too large, an error is returned:
+///
+/// ```
+/// use hex::FromHexError;
+/// # fn main() -> Result<(), FromHexError> {
+/// let mut bytes = [0_u8; 5 * 2];
+///
+/// assert_eq!(hex::encode_to_slice(b"kiwi", &mut bytes), Err(FromHexError::InvalidStringLength));
+///
+/// // you can do this instead:
+/// hex::encode_to_slice(b"kiwi", &mut bytes[..4 * 2])?;
+/// assert_eq!(&bytes, b"6b697769\0\0");
 /// # Ok(())
 /// # }
 /// ```
