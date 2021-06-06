@@ -172,7 +172,7 @@ pub trait FromHex: Sized {
     fn from_hex<T: AsRef<[u8]>>(hex: T) -> Result<Self, Self::Error>;
 }
 
-fn val(c: u8, idx: usize) -> Result<u8, FromHexError> {
+const fn val(c: u8, idx: usize) -> Result<u8, FromHexError> {
     match c {
         b'A'..=b'F' => Ok(c - b'A' + 10),
         b'a'..=b'f' => Ok(c - b'a' + 10),
@@ -340,7 +340,7 @@ fn generate_iter(len: usize) -> impl Iterator<Item = (usize, usize)> {
 // the inverse of `val`.
 #[inline]
 #[must_use]
-fn byte2hex(byte: u8, table: &[u8; 16]) -> (u8, u8) {
+const fn byte2hex(byte: u8, table: &[u8; 16]) -> (u8, u8) {
     let high = table[((byte & 0xf0) >> 4) as usize];
     let low = table[(byte & 0x0f) as usize];
 
