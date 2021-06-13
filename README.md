@@ -3,7 +3,6 @@
 [![ga-svg]][ga-url]
 [![crates-svg]][crates-url]
 [![docs-svg]][docs-url]
-[![msrv-svg]][msrv-url]
 [![codecov-svg]][codecov-url]
 [![deps-svg]][deps-url]
 
@@ -13,8 +12,6 @@
 [crates-url]: https://crates.io/crates/hex
 [docs-svg]: https://docs.rs/hex/badge.svg
 [docs-url]: https://docs.rs/hex
-[msrv-svg]: https://img.shields.io/badge/rustc-1.36+-blue.svg
-[msrv-url]: https://blog.rust-lang.org/2019/07/04/Rust-1.36.0.html
 [codecov-svg]: https://img.shields.io/codecov/c/github/KokaKiwi/rust-hex
 [codecov-url]: https://codecov.io/gh/KokaKiwi/rust-hex
 [deps-svg]: https://deps.rs/repo/github/KokaKiwi/rust-hex/status.svg
