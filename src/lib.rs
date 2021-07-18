@@ -339,6 +339,7 @@ pub fn decode<T: AsRef<[u8]>>(data: T) -> Result<Vec<u8>, FromHexError> {
 /// assert_eq!(hex::decode_to_slice("6b697769", &mut bytes as &mut [u8]), Ok(()));
 /// assert_eq!(&bytes, b"kiwi");
 /// ```
+#[inline]
 pub fn decode_to_slice<T: AsRef<[u8]>>(data: T, out: &mut [u8]) -> Result<(), FromHexError> {
     let data = data.as_ref();
 
