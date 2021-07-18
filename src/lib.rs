@@ -225,7 +225,7 @@ impl FromHex for Vec<u8> {
             return Err(FromHexError::OddLength);
         }
 
-        hex.chunks(2)
+        hex.chunks_exact(2)
             .enumerate()
             .map(|(i, pair)| val(pair, 2 * i))
             .collect()
@@ -350,7 +350,7 @@ pub fn decode_to_slice<T: AsRef<[u8]>>(data: T, out: &mut [u8]) -> Result<(), Fr
         return Err(FromHexError::InvalidStringLength);
     }
 
-    for (i, (data, byte)) in data.chunks(2).zip(out).enumerate() {
+    for (i, (data, byte)) in data.chunks_exact(2).zip(out).enumerate() {
         *byte = val(data, 2 * i)?;
     }
 
