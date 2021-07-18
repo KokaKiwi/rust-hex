@@ -40,9 +40,9 @@
 #[cfg(feature = "alloc")]
 extern crate alloc;
 #[cfg(feature = "alloc")]
-use alloc::{string::String, vec::Vec};
+use alloc::{string::String, vec, vec::Vec};
 
-use core::iter;
+use core::{iter, u8};
 
 mod error;
 pub use crate::error::FromHexError;
