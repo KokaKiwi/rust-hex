@@ -196,6 +196,7 @@ static DECODE_TABLE: [u8; 256] = [
     __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // f
 ];
 
+#[inline]
 fn val(bytes: &[u8], idx: usize) -> Result<u8, FromHexError> {
     let upper = DECODE_TABLE[bytes[0] as usize];
     let lower = DECODE_TABLE[bytes[1] as usize];
