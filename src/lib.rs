@@ -225,10 +225,9 @@ impl FromHex for Vec<u8> {
             return Err(FromHexError::OddLength);
         }
 
-        hex.chunks_exact(2)
-            .enumerate()
-            .map(|(i, pair)| val(pair, 2 * i))
-            .collect()
+        let mut out = vec![0; hex.len() / 2];
+        decode_to_slice(hex, &mut out)?;
+        Ok(out)
     }
 }
 
