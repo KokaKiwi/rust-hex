@@ -276,7 +276,10 @@ pub fn encode<T: AsRef<[u8]>>(data: T) -> String {
 #[must_use]
 #[cfg(feature = "alloc")]
 pub fn encode_upper<T: AsRef<[u8]>>(data: T) -> String {
-    data.encode_hex_upper()
+    let data = data.as_ref();
+    let mut out = vec![0; data.len() * 2];
+    encode_to_slice_upper(data, &mut out).unwrap();
+    String::from_utf8(out).unwrap()
 }
 
 /// Decodes a hex string into raw bytes.
@@ -339,7 +342,25 @@ const fn byte2hex(byte: u8, table: &[u8; 16]) -> (u8, u8) {
     (high, low)
 }
 
-/// Encodes some bytes into a mutable slice of bytes.
+fn encode_to_slice_inner(
+    input: &[u8],
+    output: &mut [u8],
+    table: &[u8; 16],
+) -> Result<(), FromHexError> {
+    if input.len() * 2 != output.len() {
+        return Err(FromHexError::InvalidStringLength);
+    }
+
+    for (byte, output) in input.iter().zip(output.chunks_exact_mut(2)) {
+        let (high, low) = byte2hex(*byte, table);
+        output[0] = high;
+        output[1] = low;
+    }
+
+    Ok(())
+}
+
+/// Encodes some bytes into a mutable slice of bytes using lowercase characters.
 ///
 /// The output buffer, has to be able to hold exactly `input.len() * 2` bytes,
 /// otherwise this function will return an error.
@@ -373,17 +394,31 @@ const fn byte2hex(byte: u8, table: &[u8; 16]) -> (u8, u8) {
 /// # }
 /// ```
 pub fn encode_to_slice<T: AsRef<[u8]>>(input: T, output: &mut [u8]) -> Result<(), FromHexError> {
-    if input.as_ref().len() * 2 != output.len() {
-        return Err(FromHexError::InvalidStringLength);
-    }
+    encode_to_slice_inner(input.as_ref(), output, HEX_CHARS_LOWER)
+}
 
-    for (byte, output) in input.as_ref().iter().zip(output.chunks_exact_mut(2)) {
-        let (high, low) = byte2hex(*byte, HEX_CHARS_LOWER);
-        output[0] = high;
-        output[1] = low;
-    }
-
-    Ok(())
+/// Encodes some bytes into a mutable slice of bytes using uppercase characters.
+///
+/// The output buffer, has to be able to hold exactly `input.len() * 2` bytes,
+/// otherwise this function will return an error.
+///
+/// # Example
+///
+/// ```
+/// # use hex::FromHexError;
+/// # fn main() -> Result<(), FromHexError> {
+/// let mut bytes = [0u8; 4 * 2];
+///
+/// hex::encode_to_slice_upper(b"kiwi", &mut bytes)?;
+/// assert_eq!(&bytes, b"6B697769");
+/// # Ok(())
+/// # }
+/// ```
+pub fn encode_to_slice_upper<T: AsRef<[u8]>>(
+    input: T,
+    output: &mut [u8],
+) -> Result<(), FromHexError> {
+    encode_to_slice_inner(input.as_ref(), output, HEX_CHARS_UPPER)
 }
 
 #[cfg(test)]
@@ -398,15 +433,23 @@ mod test {
         let mut output_1 = [0; 4 * 2];
         encode_to_slice(b"kiwi", &mut output_1).unwrap();
         assert_eq!(&output_1, b"6b697769");
+        encode_to_slice_upper(b"kiwi", &mut output_1).unwrap();
+        assert_eq!(&output_1, b"6B697769");
 
         let mut output_2 = [0; 5 * 2];
         encode_to_slice(b"kiwis", &mut output_2).unwrap();
         assert_eq!(&output_2, b"6b69776973");
+        encode_to_slice_upper(b"kiwis", &mut output_2).unwrap();
+        assert_eq!(&output_2, b"6B69776973");
 
         let mut output_3 = [0; 100];
 
         assert_eq!(
             encode_to_slice(b"kiwis", &mut output_3),
+            Err(FromHexError::InvalidStringLength)
+        );
+        assert_eq!(
+            encode_to_slice_upper(b"kiwis", &mut output_3),
             Err(FromHexError::InvalidStringLength)
         );
     }
