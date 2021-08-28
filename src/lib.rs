@@ -329,17 +329,6 @@ pub fn decode_to_slice<T: AsRef<[u8]>>(data: T, out: &mut [u8]) -> Result<(), Fr
     Ok(())
 }
 
-// generates an iterator like this
-// (0, 1)
-// (2, 3)
-// (4, 5)
-// (6, 7)
-// ...
-#[inline]
-fn generate_iter(len: usize) -> impl Iterator<Item = (usize, usize)> {
-    (0..len).step_by(2).zip((0..len).skip(1).step_by(2))
-}
-
 // the inverse of `val`.
 #[inline]
 #[must_use]
@@ -388,14 +377,10 @@ pub fn encode_to_slice<T: AsRef<[u8]>>(input: T, output: &mut [u8]) -> Result<()
         return Err(FromHexError::InvalidStringLength);
     }
 
-    for (byte, (i, j)) in input
-        .as_ref()
-        .iter()
-        .zip(generate_iter(input.as_ref().len() * 2))
-    {
+    for (byte, output) in input.as_ref().iter().zip(output.chunks_exact_mut(2)) {
         let (high, low) = byte2hex(*byte, HEX_CHARS_LOWER);
-        output[i] = high;
-        output[j] = low;
+        output[0] = high;
+        output[1] = low;
     }
 
     Ok(())
@@ -406,17 +391,7 @@ mod test {
     use super::*;
     #[cfg(feature = "alloc")]
     use alloc::string::ToString;
-    #[cfg(feature = "alloc")]
-    use alloc::vec;
     use pretty_assertions::assert_eq;
-
-    #[test]
-    #[cfg(feature = "alloc")]
-    fn test_gen_iter() {
-        let result = vec![(0, 1), (2, 3)];
-
-        assert_eq!(generate_iter(5).collect::<Vec<_>>(), result);
-    }
 
     #[test]
     fn test_encode_to_slice() {
