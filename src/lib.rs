@@ -257,7 +257,10 @@ from_hex_array_impl! {
 #[must_use]
 #[cfg(feature = "alloc")]
 pub fn encode<T: AsRef<[u8]>>(data: T) -> String {
-    data.encode_hex()
+    let data = data.as_ref();
+    let mut out = vec![0; data.len() * 2];
+    encode_to_slice(data, &mut out).unwrap();
+    String::from_utf8(out).unwrap()
 }
 
 /// Encodes `data` as hex string using uppercase characters.
