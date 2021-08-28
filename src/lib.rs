@@ -102,6 +102,7 @@ impl<'a> BytesToHexChars<'a> {
 impl<'a> Iterator for BytesToHexChars<'a> {
     type Item = char;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         match self.next.take() {
             Some(current) => Some(current),
@@ -129,7 +130,6 @@ impl<'a> iter::ExactSizeIterator for BytesToHexChars<'a> {
     }
 }
 
-#[inline]
 fn encode_to_iter<T: iter::FromIterator<char>>(table: &'static [u8; 16], source: &[u8]) -> T {
     BytesToHexChars::new(source, table).collect()
 }
