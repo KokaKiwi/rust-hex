@@ -9,7 +9,7 @@ fn bench_encode(c: &mut Criterion) {
     c.bench_function("rustc_hex_encode", |b| b.iter(|| DATA.to_hex::<String>()));
 
     c.bench_function("faster_hex_encode", |b| {
-        b.iter(|| faster_hex::hex_string(DATA).unwrap())
+        b.iter(|| faster_hex::hex_string(DATA))
     });
 
     c.bench_function("faster_hex_encode_fallback", |b| {
@@ -33,7 +33,7 @@ fn bench_decode(c: &mut Criterion) {
     });
 
     c.bench_function("faster_hex_decode", move |b| {
-        let hex = faster_hex::hex_string(DATA).unwrap();
+        let hex = faster_hex::hex_string(DATA);
         let len = DATA.len();
         let mut dst = vec![0; len];
 
@@ -41,7 +41,7 @@ fn bench_decode(c: &mut Criterion) {
     });
 
     c.bench_function("faster_hex_decode_unchecked", |b| {
-        let hex = faster_hex::hex_string(DATA).unwrap();
+        let hex = faster_hex::hex_string(DATA);
         let len = DATA.len();
         let mut dst = vec![0; len];
 
@@ -49,7 +49,7 @@ fn bench_decode(c: &mut Criterion) {
     });
 
     c.bench_function("faster_hex_decode_fallback", |b| {
-        let hex = faster_hex::hex_string(DATA).unwrap();
+        let hex = faster_hex::hex_string(DATA);
         let len = DATA.len();
         let mut dst = vec![0; len];
 
