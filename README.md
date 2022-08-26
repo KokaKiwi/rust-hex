@@ -32,7 +32,7 @@ println!("{}", hex_string); // Prints "48656c6c6f20776f726c6421"
 Decoding a `String`
 
 ```rust
-let decoded_string = hex::decode("48656c6c6f20776f726c6421");
+let decoded_string = String::from_utf8(hex::decode("48656c6c6f20776f726c6421").unwrap()).unwrap();
 
 println!("{}", decoded_string); // Prints "Hello world!"
 ```
