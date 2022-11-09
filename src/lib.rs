@@ -42,7 +42,7 @@ extern crate alloc;
 #[cfg(feature = "alloc")]
 use alloc::{string::String, vec::Vec};
 
-use core::iter;
+use core::{fmt, iter};
 
 mod error;
 pub use crate::error::FromHexError;
@@ -83,15 +83,17 @@ pub trait ToHex {
 const HEX_CHARS_LOWER: &[u8; 16] = b"0123456789abcdef";
 const HEX_CHARS_UPPER: &[u8; 16] = b"0123456789ABCDEF";
 
-struct BytesToHexChars<'a> {
+#[derive(Clone)]
+pub struct EncodeHex<'a> {
     inner: ::core::slice::Iter<'a, u8>,
     table: &'static [u8; 16],
     next: Option<char>,
 }
 
-impl<'a> BytesToHexChars<'a> {
-    fn new(inner: &'a [u8], table: &'static [u8; 16]) -> BytesToHexChars<'a> {
-        BytesToHexChars {
+impl<'a> EncodeHex<'a> {
+    #[inline]
+    fn new(inner: &'a [u8], table: &'static [u8; 16]) -> EncodeHex<'a> {
+        EncodeHex {
             inner: inner.iter(),
             table,
             next: None,
@@ -99,39 +101,64 @@ impl<'a> BytesToHexChars<'a> {
     }
 }
 
-impl<'a> Iterator for BytesToHexChars<'a> {
+impl<'a> Iterator for EncodeHex<'a> {
     type Item = char;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        match self.next.take() {
-            Some(current) => Some(current),
-            None => self.inner.next().map(|byte| {
-                let current = self.table[(byte >> 4) as usize] as char;
-                self.next = Some(self.table[(byte & 0x0F) as usize] as char);
+        self.next.take().or_else(|| {
+            self.inner.next().map(|&byte| {
+                let (high, low) = byte2hex(byte, self.table);
+                let current = high as char;
+                self.next = Some(low as char);
                 current
-            }),
-        }
+            })
+        })
     }
 
+    #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
         let length = self.len();
         (length, Some(length))
     }
 }
 
-impl<'a> iter::ExactSizeIterator for BytesToHexChars<'a> {
+impl<'a> iter::ExactSizeIterator for EncodeHex<'a> {
+    #[inline]
     fn len(&self) -> usize {
-        let mut length = self.inner.len() * 2;
-        if self.next.is_some() {
-            length += 1;
+        self.inner.len() * 2 + self.next.is_some() as usize
+    }
+}
+
+impl fmt::Display for EncodeHex<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if f.alternate() {
+            f.write_str("0x")?;
         }
-        length
+        if let Some(c) = self.next {
+            fmt::Write::write_char(f, c)?;
+        }
+        // write to f in chunks of 64 input bytes at a time
+        const CHUNK: usize = 64;
+        let mut buf = [0u8; CHUNK * 2];
+        for chunk in self.inner.as_slice().chunks(CHUNK) {
+            let buf_chunk = &mut buf[..chunk.len() * 2];
+            let chunk = encode_to_slice_inner(chunk, buf_chunk, self.table).unwrap();
+            f.write_str(chunk)?;
+        }
+        Ok(())
+    }
+}
+impl fmt::Debug for EncodeHex<'_> {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(self, f)
     }
 }
 
 #[inline]
 fn encode_to_iter<T: iter::FromIterator<char>>(table: &'static [u8; 16], source: &[u8]) -> T {
-    BytesToHexChars::new(source, table).collect()
+    EncodeHex::new(source, table).collect()
 }
 
 impl<T: AsRef<[u8]>> ToHex for T {
@@ -172,16 +199,12 @@ pub trait FromHex: Sized {
     fn from_hex<T: AsRef<[u8]>>(hex: T) -> Result<Self, Self::Error>;
 }
 
-const fn val(c: u8, idx: usize) -> Result<u8, FromHexError> {
-    match c {
-        b'A'..=b'F' => Ok(c - b'A' + 10),
-        b'a'..=b'f' => Ok(c - b'a' + 10),
-        b'0'..=b'9' => Ok(c - b'0'),
-        _ => Err(FromHexError::InvalidHexCharacter {
-            c: c as char,
-            index: idx,
-        }),
-    }
+#[inline]
+fn val(c: u8, index: usize) -> Result<u8, FromHexError> {
+    let c = c as char;
+    c.to_digit(16)
+        .map(|x| x as u8)
+        .ok_or(FromHexError::InvalidHexCharacter { c, index })
 }
 
 #[cfg(feature = "alloc")]
@@ -189,16 +212,22 @@ impl FromHex for Vec<u8> {
     type Error = FromHexError;
 
     fn from_hex<T: AsRef<[u8]>>(hex: T) -> Result<Self, Self::Error> {
-        let hex = hex.as_ref();
-        if hex.len() % 2 != 0 {
-            return Err(FromHexError::OddLength);
-        }
-
-        hex.chunks(2)
-            .enumerate()
-            .map(|(i, pair)| Ok(val(pair[0], 2 * i)? << 4 | val(pair[1], 2 * i + 1)?))
-            .collect()
+        decode_iter(hex.as_ref())?.collect()
     }
+}
+
+#[inline]
+fn decode_iter(
+    hex: &[u8],
+) -> Result<impl Iterator<Item = Result<u8, FromHexError>> + '_, FromHexError> {
+    let it = hex.chunks_exact(2);
+    if !it.remainder().is_empty() {
+        return Err(FromHexError::OddLength);
+    }
+
+    Ok(it
+        .enumerate()
+        .map(|(i, pair)| Ok(val(pair[0], i * 2)? << 4 | val(pair[1], i * 2 + 1)?)))
 }
 
 // Helper macro to implement the trait for a few fixed sized arrays. Once Rust
@@ -309,32 +338,19 @@ pub fn decode<T: AsRef<[u8]>>(data: T) -> Result<Vec<u8>, FromHexError> {
 /// assert_eq!(hex::decode_to_slice("6b697769", &mut bytes as &mut [u8]), Ok(()));
 /// assert_eq!(&bytes, b"kiwi");
 /// ```
+#[inline]
 pub fn decode_to_slice<T: AsRef<[u8]>>(data: T, out: &mut [u8]) -> Result<(), FromHexError> {
     let data = data.as_ref();
 
-    if data.len() % 2 != 0 {
-        return Err(FromHexError::OddLength);
-    }
+    let it = decode_iter(data)?;
     if data.len() / 2 != out.len() {
         return Err(FromHexError::InvalidStringLength);
     }
 
-    for (i, byte) in out.iter_mut().enumerate() {
-        *byte = val(data[2 * i], 2 * i)? << 4 | val(data[2 * i + 1], 2 * i + 1)?;
-    }
-
-    Ok(())
-}
-
-// generates an iterator like this
-// (0, 1)
-// (2, 3)
-// (4, 5)
-// (6, 7)
-// ...
-#[inline]
-fn generate_iter(len: usize) -> impl Iterator<Item = (usize, usize)> {
-    (0..len).step_by(2).zip((0..len).skip(1).step_by(2))
+    out.iter_mut().zip(it).try_for_each(|(out, byte)| {
+        *out = byte?;
+        Ok(())
+    })
 }
 
 // the inverse of `val`.
@@ -347,10 +363,10 @@ const fn byte2hex(byte: u8, table: &[u8; 16]) -> (u8, u8) {
     (high, low)
 }
 
-/// Encodes some bytes into a mutable slice of bytes.
+/// Encodes some bytes into the provided byte buffer, and then returns the buffer as a string.
 ///
-/// The output buffer, has to be able to hold exactly `input.len() * 2` bytes,
-/// otherwise this function will return an error.
+/// The output buffer has to be able to hold exactly `input.len() * 2` bytes,
+/// or this function will return an error.
 ///
 /// # Example
 ///
@@ -359,8 +375,8 @@ const fn byte2hex(byte: u8, table: &[u8; 16]) -> (u8, u8) {
 /// # fn main() -> Result<(), FromHexError> {
 /// let mut bytes = [0u8; 4 * 2];
 ///
-/// hex::encode_to_slice(b"kiwi", &mut bytes)?;
-/// assert_eq!(&bytes, b"6b697769");
+/// let string = hex::encode_to_slice(b"kiwi", &mut bytes)?;
+/// assert_eq!(string, "6b697769");
 /// # Ok(())
 /// # }
 /// ```
@@ -375,27 +391,114 @@ const fn byte2hex(byte: u8, table: &[u8; 16]) -> (u8, u8) {
 /// assert_eq!(hex::encode_to_slice(b"kiwi", &mut bytes), Err(FromHexError::InvalidStringLength));
 ///
 /// // you can do this instead:
-/// hex::encode_to_slice(b"kiwi", &mut bytes[..4 * 2])?;
+/// let string = hex::encode_to_slice(b"kiwi", &mut bytes[..4 * 2])?;
+/// assert_eq!(string, "6b697769");
 /// assert_eq!(&bytes, b"6b697769\0\0");
 /// # Ok(())
 /// # }
 /// ```
-pub fn encode_to_slice<T: AsRef<[u8]>>(input: T, output: &mut [u8]) -> Result<(), FromHexError> {
-    if input.as_ref().len() * 2 != output.len() {
+#[inline]
+pub fn encode_to_slice<T: AsRef<[u8]>>(
+    input: T,
+    output: &mut [u8],
+) -> Result<&mut str, FromHexError> {
+    encode_to_slice_inner(input.as_ref(), output, HEX_CHARS_LOWER)
+}
+
+/// Encodes some bytes into the provided byte buffer, and then returns the buffer as a string.
+///
+/// Apart from the characters' casing, this works exactly like [`encode_to_slice()`].
+///
+/// The output buffer has to be able to hold exactly `input.len() * 2` bytes,
+/// or this function will return an error.
+///
+/// # Example
+///
+/// ```
+/// # use hex::FromHexError;
+/// # fn main() -> Result<(), FromHexError> {
+/// let mut bytes = [0u8; 4 * 2];
+///
+/// let string = hex::encode_to_slice_upper(b"kiwi", &mut bytes)?;
+/// assert_eq!(string, "6B697769");
+/// # Ok(())
+/// # }
+/// ```
+///
+/// If the buffer is too large, an error is returned:
+///
+/// ```
+/// use hex::FromHexError;
+/// # fn main() -> Result<(), FromHexError> {
+/// let mut bytes = [0_u8; 5 * 2];
+///
+/// assert_eq!(hex::encode_to_slice_upper(b"kiwi", &mut bytes), Err(FromHexError::InvalidStringLength));
+///
+/// // you can do this instead:
+/// let string = hex::encode_to_slice_upper(b"kiwi", &mut bytes[..4 * 2])?;
+/// assert_eq!(string, "6B697769");
+/// assert_eq!(&bytes, b"6B697769\0\0");
+/// # Ok(())
+/// # }
+/// ```
+#[inline]
+pub fn encode_to_slice_upper<T: AsRef<[u8]>>(
+    input: T,
+    output: &mut [u8],
+) -> Result<&mut str, FromHexError> {
+    encode_to_slice_inner(input.as_ref(), output, HEX_CHARS_UPPER)
+}
+
+#[inline]
+fn encode_to_slice_inner<'a>(
+    input: &[u8],
+    output: &'a mut [u8],
+    table: &[u8; 16],
+) -> Result<&'a mut str, FromHexError> {
+    if input.len() * 2 != output.len() {
         return Err(FromHexError::InvalidStringLength);
     }
 
-    for (byte, (i, j)) in input
-        .as_ref()
-        .iter()
-        .zip(generate_iter(input.as_ref().len() * 2))
-    {
-        let (high, low) = byte2hex(*byte, HEX_CHARS_LOWER);
-        output[i] = high;
-        output[j] = low;
+    for (out, byte) in output.chunks_exact_mut(2).zip(input) {
+        let (high, low) = byte2hex(*byte, table);
+        out[0] = high;
+        out[1] = low;
     }
 
-    Ok(())
+    // SAFETY: output was just fully filled with only ascii characters
+    let output = unsafe { core::str::from_utf8_unchecked_mut(output) };
+
+    Ok(output)
+}
+
+/// Returns a [`Display`][fmt::Display] type that formats to the hex representation of the input.
+///
+/// # Example
+///
+/// ```
+/// let hex = hex::encode_fmt(b"\r\n");
+/// let s = format!("the data is: {}", hex);
+/// assert_eq!(s, "the data is: 0d0a");
+/// ```
+#[inline]
+pub fn encode_fmt<T: AsRef<[u8]>>(input: &T) -> EncodeHex<'_> {
+    EncodeHex::new(input.as_ref(), HEX_CHARS_LOWER)
+}
+
+/// Returns a [`Display`][fmt::Display] type that formats to the hex representation of the input.
+///
+/// Apart from the characters' casing, this works exactly like [`encode_fmt()`].
+///
+/// # Example
+///
+/// ```
+/// let hex = hex::encode_fmt_upper(b"\r\n");
+/// let s = format!("the data is: {}", hex);
+/// assert_eq!(s, "the data is: 0D0A");
+/// ```
+#[inline]
+pub fn encode_fmt_upper<T: AsRef<[u8]>>(input: &T) -> EncodeHex<'_> {
+    EncodeHex::new(input.as_ref(), HEX_CHARS_UPPER)
 }
 
 #[cfg(test)]
@@ -403,17 +506,7 @@ mod test {
     use super::*;
     #[cfg(feature = "alloc")]
     use alloc::string::ToString;
-    #[cfg(feature = "alloc")]
-    use alloc::vec;
     use pretty_assertions::assert_eq;
-
-    #[test]
-    #[cfg(feature = "alloc")]
-    fn test_gen_iter() {
-        let result = vec![(0, 1), (2, 3)];
-
-        assert_eq!(generate_iter(5).collect::<Vec<_>>(), result);
-    }
 
     #[test]
     fn test_encode_to_slice() {
