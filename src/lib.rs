@@ -326,17 +326,6 @@ pub fn decode_to_slice<T: AsRef<[u8]>>(data: T, out: &mut [u8]) -> Result<(), Fr
     Ok(())
 }
 
-// generates an iterator like this
-// (0, 1)
-// (2, 3)
-// (4, 5)
-// (6, 7)
-// ...
-#[inline]
-fn generate_iter(len: usize) -> impl Iterator<Item = (usize, usize)> {
-    (0..len).step_by(2).zip((0..len).skip(1).step_by(2))
-}
-
 // the inverse of `val`.
 #[inline]
 #[must_use]
@@ -381,18 +370,16 @@ const fn byte2hex(byte: u8, table: &[u8; 16]) -> (u8, u8) {
 /// # }
 /// ```
 pub fn encode_to_slice<T: AsRef<[u8]>>(input: T, output: &mut [u8]) -> Result<(), FromHexError> {
-    if input.as_ref().len() * 2 != output.len() {
+    let input = input.as_ref();
+    if input.len() * 2 != output.len() {
         return Err(FromHexError::InvalidStringLength);
     }
 
-    for (byte, (i, j)) in input
-        .as_ref()
-        .iter()
-        .zip(generate_iter(input.as_ref().len() * 2))
-    {
-        let (high, low) = byte2hex(*byte, HEX_CHARS_LOWER);
-        output[i] = high;
-        output[j] = low;
+    // TODO: use array_chunks_mut i/o chunks_exact_mut once that’s stabilises.
+    for (out, &byte) in output.chunks_exact_mut(2).zip(input.iter()) {
+        let (high, low) = byte2hex(byte, HEX_CHARS_LOWER);
+        out[0] = high;
+        out[1] = low;
     }
 
     Ok(())
@@ -401,19 +388,7 @@ pub fn encode_to_slice<T: AsRef<[u8]>>(input: T, output: &mut [u8]) -> Result<()
 #[cfg(test)]
 mod test {
     use super::*;
-    #[cfg(feature = "alloc")]
-    use alloc::string::ToString;
-    #[cfg(feature = "alloc")]
-    use alloc::vec;
     use pretty_assertions::assert_eq;
-
-    #[test]
-    #[cfg(feature = "alloc")]
-    fn test_gen_iter() {
-        let result = vec![(0, 1), (2, 3)];
-
-        assert_eq!(generate_iter(5).collect::<Vec<_>>(), result);
-    }
 
     #[test]
     fn test_encode_to_slice() {
@@ -532,12 +507,12 @@ mod test {
     fn test_to_hex() {
         assert_eq!(
             [0x66, 0x6f, 0x6f, 0x62, 0x61, 0x72].encode_hex::<String>(),
-            "666f6f626172".to_string(),
+            "666f6f626172",
         );
 
         assert_eq!(
             [0x66, 0x6f, 0x6f, 0x62, 0x61, 0x72].encode_hex_upper::<String>(),
-            "666F6F626172".to_string(),
+            "666F6F626172",
         );
     }
 }
