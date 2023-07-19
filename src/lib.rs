@@ -364,55 +364,137 @@ pub fn encode_to_slice<T: AsRef<[u8]>>(input: T, output: &mut [u8]) -> Result<()
     Ok(())
 }
 
+/// A wrapper around binary data which formats them as hex when [displaying
+/// it][core::fmt::Display].
+///
+/// See [`display`] function.
+pub struct Display<'a>(&'a [u8]);
+
+impl Display<'_> {
+    fn do_fmt(&self, fmtr: &mut core::fmt::Formatter<'_>, chars: &[u8; 16]) -> core::fmt::Result {
+        debug_assert!(chars.is_ascii());
+        let mut buffer = [core::mem::MaybeUninit::<u8>::uninit(); 512];
+        for chunk in self.0.chunks(buffer.len() / 2) {
+            // TODO: Use `array_chunks_mut` instead of `chunks_exact_mut` once
+            // it stabilises.
+            for (out, &byte) in buffer.chunks_exact_mut(2).zip(chunk.iter()) {
+                let (high, low) = byte2hex(byte, chars);
+                out[0].write(high);
+                out[1].write(low);
+            }
+            let len = chunk.len() * 2;
+            let chunk = (&buffer[..len]) as *const [_] as *const [u8];
+            // SAFETY: we've just filled the buffer up to len with hex digits
+            // which are ASCII characters.
+            fmtr.write_str(unsafe { core::str::from_utf8_unchecked(&*chunk) })?;
+        }
+        Ok(())
+    }
+}
+
+impl core::fmt::Display for Display<'_> {
+    #[inline]
+    fn fmt(&self, fmtr: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        self.do_fmt(fmtr, HEX_CHARS_LOWER)
+    }
+}
+
+impl core::fmt::LowerHex for Display<'_> {
+    #[inline]
+    fn fmt(&self, fmtr: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        self.do_fmt(fmtr, HEX_CHARS_LOWER)
+    }
+}
+
+impl core::fmt::UpperHex for Display<'_> {
+    #[inline]
+    fn fmt(&self, fmtr: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        self.do_fmt(fmtr, HEX_CHARS_UPPER)
+    }
+}
+
+impl core::fmt::Debug for Display<'_> {
+    #[inline]
+    fn fmt(&self, fmtr: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        self.do_fmt(fmtr, HEX_CHARS_LOWER)
+    }
+}
+
+/// Wraps the value in an object which can be formatted as hex.
+///
+/// The benefit over using [`encode`] is that no memory allocations are done
+/// when formatting the value.
+///
+/// # Example
+///
+/// ```
+/// assert_eq!(hex::display(b"kiwi").to_string(), "6b697769");
+/// assert_eq!(format!("{}", hex::display(b"kiwi")), "6b697769");
+/// assert_eq!(format!("{:X}", hex::display(b"kiwi")), "6B697769");
+/// ```
+#[inline]
+pub fn display<T: AsRef<[u8]>>(input: &T) -> Display<'_> {
+    Display(input.as_ref())
+}
+
 #[cfg(test)]
 mod test {
+    extern crate alloc;
+
     use super::*;
-    #[cfg(feature = "alloc")]
-    use alloc::string::ToString;
-    #[cfg(feature = "alloc")]
-    use alloc::vec;
     use pretty_assertions::assert_eq;
 
     #[test]
     #[cfg(feature = "alloc")]
     fn test_gen_iter() {
-        let result = vec![(0, 1), (2, 3)];
+        let result = alloc::vec![(0, 1), (2, 3)];
 
         assert_eq!(generate_iter(5).collect::<Vec<_>>(), result);
     }
 
+    const TEST_CASES: [(&[u8], &str, &str); 5] = [
+        (b"", "", ""),
+        (b"kiwi", "6b697769", "6B697769"),
+        (b"kiwis", "6b69776973", "6B69776973"),
+        (b"foobar", "666f6f626172", "666F6F626172"),
+        (b"\xef\xbb\xbf", "efbbbf", "EFBBBF"),
+    ];
+
     #[test]
     fn test_encode_to_slice() {
-        let mut output_1 = [0; 4 * 2];
-        encode_to_slice(b"kiwi", &mut output_1).unwrap();
-        assert_eq!(&output_1, b"6b697769");
+        let mut buffer = [0; 16];
 
-        let mut output_2 = [0; 5 * 2];
-        encode_to_slice(b"kiwis", &mut output_2).unwrap();
-        assert_eq!(&output_2, b"6b69776973");
-
-        let mut output_3 = [0; 100];
+        for (bytes, lower, _upper) in TEST_CASES {
+            buffer.fill(0);
+            let output = &mut buffer[..lower.len()];
+            encode_to_slice(bytes, output).unwrap();
+            assert_eq!(output, lower.as_bytes());
+        }
 
         assert_eq!(
-            encode_to_slice(b"kiwis", &mut output_3),
+            encode_to_slice(b"kiwis", &mut buffer),
             Err(FromHexError::InvalidStringLength)
         );
     }
 
     #[test]
     fn test_decode_to_slice() {
-        let mut output_1 = [0; 4];
-        decode_to_slice(b"6b697769", &mut output_1).unwrap();
-        assert_eq!(&output_1, b"kiwi");
+        let mut buffer = [0; 8];
 
-        let mut output_2 = [0; 5];
-        decode_to_slice(b"6b69776973", &mut output_2).unwrap();
-        assert_eq!(&output_2, b"kiwis");
-
-        let mut output_3 = [0; 4];
+        for (bytes, lower, upper) in TEST_CASES {
+            let output = &mut buffer[..bytes.len()];
+            decode_to_slice(lower, output).unwrap();
+            assert_eq!(output, bytes);
+            decode_to_slice(upper, output).unwrap();
+            assert_eq!(output, bytes);
+        }
 
         assert_eq!(
-            decode_to_slice(b"6", &mut output_3),
+            decode_to_slice(b"kiwi", &mut buffer),
+            Err(FromHexError::InvalidStringLength)
+        );
+        assert_eq!(
+            decode_to_slice(b"kiwis", &mut buffer),
             Err(FromHexError::OddLength)
         );
     }
@@ -420,30 +502,52 @@ mod test {
     #[test]
     #[cfg(feature = "alloc")]
     fn test_encode() {
-        assert_eq!(encode("foobar"), "666f6f626172");
+        for (bytes, lower, upper) in TEST_CASES {
+            assert_eq!(encode(bytes), lower);
+            assert_eq!(encode_upper(bytes), upper);
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn test_to_hex() {
+        for (bytes, lower, upper) in TEST_CASES {
+            assert_eq!(bytes.encode_hex::<String>(), lower);
+            assert_eq!(bytes.encode_hex_upper::<String>(), upper);
+        }
+    }
+
+    #[test]
+    fn test_display() {
+        for (bytes, lower, upper) in TEST_CASES {
+            let disp = display(&bytes);
+            assert_eq!(alloc::format!("{disp}"), lower);
+            assert_eq!(alloc::format!("{disp:?}"), lower);
+            assert_eq!(alloc::format!("{disp:x}"), lower);
+            assert_eq!(alloc::format!("{disp:X}"), upper);
+        }
     }
 
     #[test]
     #[cfg(feature = "alloc")]
     fn test_decode() {
-        assert_eq!(
-            decode("666f6f626172"),
-            Ok(String::from("foobar").into_bytes())
-        );
+        for (bytes, lower, upper) in TEST_CASES {
+            assert_eq!(decode(lower).unwrap(), bytes);
+            assert_eq!(decode(lower.as_bytes()).unwrap(), bytes);
+            assert_eq!(decode(upper).unwrap(), bytes);
+            assert_eq!(decode(upper.as_bytes()).unwrap(), bytes);
+        }
     }
 
     #[test]
     #[cfg(feature = "alloc")]
-    pub fn test_from_hex_okay_str() {
-        assert_eq!(Vec::from_hex("666f6f626172").unwrap(), b"foobar");
-        assert_eq!(Vec::from_hex("666F6F626172").unwrap(), b"foobar");
-    }
-
-    #[test]
-    #[cfg(feature = "alloc")]
-    pub fn test_from_hex_okay_bytes() {
-        assert_eq!(Vec::from_hex(b"666f6f626172").unwrap(), b"foobar");
-        assert_eq!(Vec::from_hex(b"666F6F626172").unwrap(), b"foobar");
+    pub fn test_from_hex() {
+        for (bytes, lower, upper) in TEST_CASES {
+            assert_eq!(Vec::from_hex(lower).unwrap(), bytes);
+            assert_eq!(Vec::from_hex(lower.as_bytes()).unwrap(), bytes);
+            assert_eq!(Vec::from_hex(upper).unwrap(), bytes);
+            assert_eq!(Vec::from_hex(upper.as_bytes()).unwrap(), bytes);
+        }
     }
 
     #[test]
@@ -467,12 +571,6 @@ mod test {
 
     #[test]
     #[cfg(feature = "alloc")]
-    pub fn test_empty() {
-        assert_eq!(Vec::from_hex("").unwrap(), b"");
-    }
-
-    #[test]
-    #[cfg(feature = "alloc")]
     pub fn test_from_hex_whitespace() {
         assert_eq!(
             Vec::from_hex("666f 6f62617").unwrap_err(),
@@ -490,20 +588,6 @@ mod test {
         assert_eq!(
             <[u8; 5] as FromHex>::from_hex("666f6f626172"),
             Err(FromHexError::InvalidStringLength)
-        );
-    }
-
-    #[test]
-    #[cfg(feature = "alloc")]
-    fn test_to_hex() {
-        assert_eq!(
-            [0x66, 0x6f, 0x6f, 0x62, 0x61, 0x72].encode_hex::<String>(),
-            "666f6f626172".to_string(),
-        );
-
-        assert_eq!(
-            [0x66, 0x6f, 0x6f, 0x62, 0x61, 0x72].encode_hex_upper::<String>(),
-            "666F6F626172".to_string(),
         );
     }
 }
