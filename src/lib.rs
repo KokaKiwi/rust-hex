@@ -398,6 +398,79 @@ pub fn encode_to_slice<T: AsRef<[u8]>>(input: T, output: &mut [u8]) -> Result<()
     Ok(())
 }
 
+/// A wrapper around binary data which formats them as hex when [displaying
+/// it][core::fmt::Display].
+///
+/// See [`display`] function.
+pub struct Display<'a>(&'a [u8]);
+
+impl Display<'_> {
+    fn do_fmt(&self, fmtr: &mut core::fmt::Formatter<'_>, chars: &[u8; 16]) -> core::fmt::Result {
+        debug_assert!(chars.is_ascii());
+        let mut buffer = [core::mem::MaybeUninit::<u8>::uninit(); 512];
+        for chunk in self.0.chunks(buffer.len() / 2) {
+            // TODO: Use `array_chunks_mut` instead of `chunks_exact_mut` once
+            // it stabilises.
+            for (out, &byte) in buffer.chunks_exact_mut(2).zip(chunk.iter()) {
+                let (high, low) = byte2hex(byte, chars);
+                out[0].write(high);
+                out[1].write(low);
+            }
+            let len = chunk.len() * 2;
+            let chunk = (&buffer[..len]) as *const [_] as *const [u8];
+            // SAFETY: we've just filled the buffer up to len with hex digits
+            // which are ASCII characters.
+            fmtr.write_str(unsafe { core::str::from_utf8_unchecked(&*chunk) })?;
+        }
+        Ok(())
+    }
+}
+
+impl core::fmt::Display for Display<'_> {
+    #[inline]
+    fn fmt(&self, fmtr: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        self.do_fmt(fmtr, HEX_CHARS_LOWER)
+    }
+}
+
+impl core::fmt::LowerHex for Display<'_> {
+    #[inline]
+    fn fmt(&self, fmtr: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        self.do_fmt(fmtr, HEX_CHARS_LOWER)
+    }
+}
+
+impl core::fmt::UpperHex for Display<'_> {
+    #[inline]
+    fn fmt(&self, fmtr: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        self.do_fmt(fmtr, HEX_CHARS_UPPER)
+    }
+}
+
+impl core::fmt::Debug for Display<'_> {
+    #[inline]
+    fn fmt(&self, fmtr: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        self.do_fmt(fmtr, HEX_CHARS_LOWER)
+    }
+}
+
+/// Wraps the value in an object which can be formatted as hex.
+///
+/// The benefit over using [`encode`] is that no memory allocations are done
+/// when formatting the value.
+///
+/// # Example
+///
+/// ```
+/// assert_eq!(hex::display(b"kiwi").to_string(), "6b697769");
+/// assert_eq!(format!("{}", hex::display(b"kiwi")), "6b697769");
+/// assert_eq!(format!("{:X}", hex::display(b"kiwi")), "6B697769");
+/// ```
+#[inline]
+pub fn display<'a, T: AsRef<[u8]>>(input: &'a T) -> Display<'a> {
+    Display(input.as_ref())
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
