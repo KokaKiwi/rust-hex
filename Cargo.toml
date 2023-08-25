@@ -10,6 +10,7 @@ edition = "2018"
 readme = "README.md"
 keywords = ["no_std", "hex"]
 categories = ["encoding", "no-std"]
+rust-version = "1.60"
 
 [badges]
 maintenance = { status = "actively-developed" }
@@ -18,12 +19,15 @@ maintenance = { status = "actively-developed" }
 default = ["std"]
 alloc = []
 std = ["alloc"]
+serde = ["dep:serde", "heapless?/serde"]
+heapless = ["dep:heapless"]
 
 [[bench]]
 name = "hex"
 harness = false
 
 [dependencies]
+heapless = { version = "0.7", optional = true }
 serde = { version = "1.0", default-features = false, optional = true }
 
 [dev-dependencies]
@@ -34,6 +38,7 @@ version-sync = "0.9"
 pretty_assertions = "0.6"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+serde-json-core = "0.5"
 
 [package.metadata.docs.rs]
 all-features = true
