@@ -49,6 +49,8 @@ pub mod serde;
 pub use crate::serde::deserialize;
 #[cfg(all(feature = "alloc", feature = "serde"))]
 pub use crate::serde::{serialize, serialize_upper};
+#[cfg(all(feature = "heapless", feature = "serde"))]
+pub use crate::serde::{serialize_heapless, serialize_upper_heapless};
 
 /// Encoding values as hex string.
 ///
@@ -196,6 +198,23 @@ impl FromHex for Vec<u8> {
     }
 }
 
+#[cfg(feature = "heapless")]
+impl<const N: usize> FromHex for heapless::Vec<u8, N> {
+    type Error = FromHexError;
+
+    fn from_hex<T: AsRef<[u8]>>(hex: T) -> Result<Self, Self::Error> {
+        let hex = hex.as_ref();
+        if hex.len() % 2 != 0 {
+            return Err(FromHexError::OddLength);
+        }
+
+        hex.chunks(2)
+            .enumerate()
+            .map(|(i, pair)| Ok(val(pair[0], 2 * i)? << 4 | val(pair[1], 2 * i + 1)?))
+            .collect()
+    }
+}
+
 impl<const N: usize> FromHex for [u8; N] {
     type Error = FromHexError;
 
@@ -226,6 +245,42 @@ pub fn encode<T: AsRef<[u8]>>(data: T) -> String {
     data.encode_hex()
 }
 
+/// Encodes `data` as hex string using lowercase characters.
+///
+/// Lowercase characters are used (e.g. `f9b4ca`). The resulting string's
+/// length is always even, each byte in `data` is always encoded using two hex
+/// digits. Thus, the resulting string contains exactly twice as many bytes as
+/// the input data.
+///
+/// Because it use heapless::String, this function need type annotation.
+/// The explicit type String, has to be able to hold at least `data.len() * 2` bytes,
+/// otherwise this function will return an error.
+///
+/// # Example
+///
+/// ```
+/// use heapless::{String, Vec};
+///
+/// let hex_str: String<24> = hex::encode_heapless("Hello world!").expect("encode error");
+/// assert_eq!(hex_str, "48656c6c6f20776f726c6421");
+/// let hex_str: String<10> = hex::encode_heapless(Vec::<u8, 5>::from_slice(&[1, 2, 3, 15, 16]).unwrap()).expect("encode error");
+/// assert_eq!(hex_str, "0102030f10");
+/// let hex_str: String<30> = hex::encode_heapless("can be longer").expect("encode error");
+/// assert_eq!(hex_str, "63616e206265206c6f6e676572");
+/// let res: Result<String<29>,_> = hex::encode_heapless("but not shorter");
+/// assert!(res.is_err());
+/// ```
+#[must_use]
+#[cfg(feature = "heapless")]
+pub fn encode_heapless<T: AsRef<[u8]>, const N: usize>(
+    data: T,
+) -> Result<heapless::String<N>, FromHexError> {
+    if data.as_ref().len() * 2 > N {
+        return Err(FromHexError::InvalidStringLength);
+    }
+    Ok(data.encode_hex())
+}
+
 /// Encodes `data` as hex string using uppercase characters.
 ///
 /// Apart from the characters' casing, this works exactly like `encode()`.
@@ -240,6 +295,34 @@ pub fn encode<T: AsRef<[u8]>>(data: T) -> String {
 #[cfg(feature = "alloc")]
 pub fn encode_upper<T: AsRef<[u8]>>(data: T) -> String {
     data.encode_hex_upper()
+}
+
+/// Encodes `data` as hex string using uppercase characters.
+///
+/// Apart from the characters' casing, this works exactly like `encode_heapless()`.
+///
+/// # Example
+///
+/// ```
+/// use heapless::{String, Vec};
+///
+/// let hex_str: String<24> = hex::encode_upper_heapless("Hello world!").expect("encode error");
+/// assert_eq!(hex_str, "48656C6C6F20776F726C6421");
+/// let hex_str: String<10> = hex::encode_upper_heapless(Vec::<u8, 5>::from_slice(&[1, 2, 3, 15, 16]).unwrap()).expect("encode error");
+/// assert_eq!(hex_str, "0102030F10");
+/// let hex_str: String<30> = hex::encode_upper_heapless("can be longer").expect("encode error");
+/// assert_eq!(hex_str, "63616E206265206C6F6E676572");
+/// let res: Result<String<29>,_> = hex::encode_upper_heapless("but not shorter");
+/// assert!(res.is_err());
+/// ```
+#[cfg(feature = "heapless")]
+pub fn encode_upper_heapless<T: AsRef<[u8]>, const N: usize>(
+    data: T,
+) -> Result<heapless::String<N>, FromHexError> {
+    if data.as_ref().len() * 2 > N {
+        return Err(FromHexError::InvalidStringLength);
+    }
+    Ok(data.encode_hex_upper())
 }
 
 /// Decodes a hex string into raw bytes.
@@ -260,6 +343,32 @@ pub fn encode_upper<T: AsRef<[u8]>>(data: T) -> String {
 /// ```
 #[cfg(feature = "alloc")]
 pub fn decode<T: AsRef<[u8]>>(data: T) -> Result<Vec<u8>, FromHexError> {
+    FromHex::from_hex(data)
+}
+
+/// Decodes a hex string into raw bytes.
+///
+/// Both, upper and lower case characters are valid in the input string and can
+/// even be mixed (e.g. `f9b4ca`, `F9B4CA` and `f9B4Ca` are all valid strings).
+///
+/// # Example
+///
+/// ```
+/// use heapless::Vec;
+///
+/// let res: Vec<u8,12> = hex::decode_heapless("48656c6c6f20776f726c6421").expect("decode error");
+/// let expected: Vec<u8, 12> = Vec::from_slice(b"Hello world!").unwrap();
+/// assert_eq!(res, expected);
+///
+/// let res: Result<Vec<u8,2>,_> = hex::decode_heapless("123");
+/// assert_eq!(res, Err(hex::FromHexError::OddLength));
+/// let res: Result<Vec<u8,2>,_> = hex::decode_heapless("foo");
+/// assert!(res.is_err());
+/// ```
+#[cfg(feature = "heapless")]
+pub fn decode_heapless<T: AsRef<[u8]>, const N: usize>(
+    data: T,
+) -> Result<heapless::Vec<u8, N>, FromHexError> {
     FromHex::from_hex(data)
 }
 
@@ -424,11 +533,29 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "heapless")]
+    fn test_encode_heapless() {
+        assert_eq!(
+            encode_heapless::<&str, 12>("foobar").expect("encode error"),
+            "666f6f626172"
+        );
+    }
+
+    #[test]
     #[cfg(feature = "alloc")]
     fn test_decode() {
         assert_eq!(
             decode("666f6f626172"),
             Ok(String::from("foobar").into_bytes())
+        );
+    }
+
+    #[test]
+    #[cfg(feature = "heapless")]
+    fn test_decode_heapless() {
+        assert_eq!(
+            decode_heapless::<&str, 12>("666f6f626172"),
+            Ok(heapless::Vec::from_slice(b"foobar").unwrap())
         );
     }
 
@@ -440,10 +567,36 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "heapless")]
+    pub fn test_from_hex_okay_str_heapless() {
+        assert_eq!(
+            <heapless::Vec<u8, 12> as FromHex>::from_hex("666f6f626172").unwrap(),
+            b"foobar"
+        );
+        assert_eq!(
+            <heapless::Vec<u8, 12> as FromHex>::from_hex("666F6F626172").unwrap(),
+            b"foobar"
+        );
+    }
+
+    #[test]
     #[cfg(feature = "alloc")]
     pub fn test_from_hex_okay_bytes() {
         assert_eq!(Vec::from_hex(b"666f6f626172").unwrap(), b"foobar");
         assert_eq!(Vec::from_hex(b"666F6F626172").unwrap(), b"foobar");
+    }
+
+    #[test]
+    #[cfg(feature = "heapless")]
+    pub fn test_from_hex_okay_bytes_heapless() {
+        assert_eq!(
+            <heapless::Vec<u8, 12> as FromHex>::from_hex(b"666f6f626172").unwrap(),
+            b"foobar"
+        );
+        assert_eq!(
+            <heapless::Vec<u8, 12> as FromHex>::from_hex(b"666F6F626172").unwrap(),
+            b"foobar"
+        );
     }
 
     #[test]
@@ -452,6 +605,19 @@ mod test {
         assert_eq!(Vec::from_hex("1").unwrap_err(), FromHexError::OddLength);
         assert_eq!(
             Vec::from_hex("666f6f6261721").unwrap_err(),
+            FromHexError::OddLength
+        );
+    }
+
+    #[test]
+    #[cfg(feature = "heapless")]
+    pub fn test_invalid_length_heapless() {
+        assert_eq!(
+            <heapless::Vec<u8, 1> as FromHex>::from_hex("1").unwrap_err(),
+            FromHexError::OddLength
+        );
+        assert_eq!(
+            <heapless::Vec<u8, 13> as FromHex>::from_hex("666f6f6261721").unwrap_err(),
             FromHexError::OddLength
         );
     }
@@ -466,9 +632,27 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "heapless")]
+    pub fn test_invalid_char_heapless() {
+        assert_eq!(
+            <heapless::Vec<u8, 4> as FromHex>::from_hex("66ag").unwrap_err(),
+            FromHexError::InvalidHexCharacter { c: 'g', index: 3 }
+        );
+    }
+
+    #[test]
     #[cfg(feature = "alloc")]
     pub fn test_empty() {
         assert_eq!(Vec::from_hex("").unwrap(), b"");
+    }
+
+    #[test]
+    #[cfg(feature = "heapless")]
+    pub fn test_empty_heapless() {
+        assert_eq!(
+            <heapless::Vec<u8, 0> as FromHex>::from_hex("").unwrap(),
+            b""
+        );
     }
 
     #[test]
@@ -476,6 +660,15 @@ mod test {
     pub fn test_from_hex_whitespace() {
         assert_eq!(
             Vec::from_hex("666f 6f62617").unwrap_err(),
+            FromHexError::InvalidHexCharacter { c: ' ', index: 4 }
+        );
+    }
+
+    #[test]
+    #[cfg(feature = "heapless")]
+    pub fn test_from_hex_whitespace_heapless() {
+        assert_eq!(
+            <heapless::Vec<u8, 12> as FromHex>::from_hex("666f 6f62617").unwrap_err(),
             FromHexError::InvalidHexCharacter { c: ' ', index: 4 }
         );
     }
@@ -504,6 +697,20 @@ mod test {
         assert_eq!(
             [0x66, 0x6f, 0x6f, 0x62, 0x61, 0x72].encode_hex_upper::<String>(),
             "666F6F626172".to_string(),
+        );
+    }
+
+    #[test]
+    #[cfg(feature = "heapless")]
+    fn test_to_hex_heapless() {
+        assert_eq!(
+            [0x66, 0x6f, 0x6f, 0x62, 0x61, 0x72].encode_hex::<heapless::String<12>>(),
+            heapless::String::<12>::from("666f6f626172"),
+        );
+
+        assert_eq!(
+            [0x66, 0x6f, 0x6f, 0x62, 0x61, 0x72].encode_hex_upper::<heapless::String<12>>(),
+            heapless::String::<12>::from("666F6F626172"),
         );
     }
 }

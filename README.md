@@ -65,6 +65,8 @@ hex = { version = "0.4", default-features = false }
   Enabled by default. Add support for Rust's libstd types.
 - `alloc`:
   Enabled by default. Add support for alloc types (e.g. `String`) in `no_std` environment.
+- `heapless`:
+  Disabled by default. Add support for heapless types (e.g. `String`) in `no_std` environment with allocation on the stack.
 - `serde`:
   Disabled by default. Add support for `serde` de/serializing library.
   See the `serde` module documentation for usage.
