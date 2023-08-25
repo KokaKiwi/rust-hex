@@ -30,6 +30,7 @@ test:
     - cargo test --no-default-features --features alloc
     - cargo test --no-default-features --features std
     - cargo test --no-default-features --features serde
+    - cargo test --no-default-features --features heapless
   cache:
     key: "$CI_COMMIT_REF_SLUG:$RUST_VERSION"
     paths:
