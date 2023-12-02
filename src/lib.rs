@@ -326,6 +326,30 @@ pub fn decode_to_slice<T: AsRef<[u8]>>(data: T, out: &mut [u8]) -> Result<(), Fr
     Ok(())
 }
 
+/// Decode a hex string into itself.
+///
+/// Both, upper and lower case characters are valid in the input string and can
+/// even be mixed (e.g. `f9b4ca`, `F9B4CA` and `f9B4Ca` are all valid strings).
+///
+/// # Example
+///
+/// ```
+/// let mut bytes: [u8; 8] = *b"6b697769";
+/// assert_eq!(hex::decode_in_slice(&mut bytes), Ok(()));
+/// assert_eq!(&bytes[0..bytes.len() / 2], b"kiwi");
+/// ```
+pub fn decode_in_slice(in_out: &mut [u8]) -> Result<(), FromHexError> {
+    if in_out.len() % 2 != 0 {
+        return Err(FromHexError::OddLength);
+    }
+
+    for i in 0..(in_out.len() / 2) {
+        in_out[i] = val(in_out[2 * i], 2 * i)? << 4 | val(in_out[2 * i + 1], 2 * i + 1)?;
+    }
+
+    Ok(())
+}
+
 // generates an iterator like this
 // (0, 1)
 // (2, 3)
