@@ -20,6 +20,9 @@ pub enum FromHexError {
 #[cfg(feature = "std")]
 impl std::error::Error for FromHexError {}
 
+#[cfg(not(feature = "std"))]
+impl core::error::Error for FromHexError {}
+
 impl fmt::Display for FromHexError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
