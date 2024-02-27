@@ -80,6 +80,66 @@ pub trait ToHex {
     fn encode_hex_upper<T: iter::FromIterator<char>>(&self) -> T;
 }
 
+/// Allows encoding bytes to hex without intermediate allocation
+///
+/// All binary data written to a `HexWriter` will be hex-encoded and written
+/// to the inner `std::fmt::Writer` supplied in [`HexWriter::new`]. Once all
+/// data has been written the inner writer can be retrieved using
+/// [`HexWriter::into_inner`].
+///
+/// ```
+/// let mut lower_writer = HexWriter::new(String::new());
+/// // some_struct.encode(&mut lower_writer)?;
+/// let hex_string = lower_writer.into_inner();
+/// ```
+#[cfg(feature = "std")]
+pub struct HexWriter<W> {
+    charset: &'static [u8; 16],
+    writer: W,
+}
+
+#[cfg(feature = "std")]
+impl<W> HexWriter<W> {
+    /// Creates a new [`HexWriter`] that encodes in lower-case hex.
+    pub fn new(writer: W) -> Self {
+        HexWriter {
+            charset: HEX_CHARS_LOWER,
+            writer,
+        }
+    }
+
+    /// Creates a new [`HexWriter`] that encodes in upper-case hex.
+    pub fn new_upper(writer: W) -> Self {
+        HexWriter {
+            charset: HEX_CHARS_UPPER,
+            writer,
+        }
+    }
+
+    /// Retrieves the inner `std::fmt::Writer` containing that the
+    /// hex-encoded data was written to. Useful if it is e.g. a `String`.
+    pub fn into_inner(self) -> W {
+        self.writer
+    }
+}
+
+#[cfg(feature = "std")]
+impl<W: std::fmt::Write> std::io::Write for HexWriter<W> {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        for c in BytesToHexChars::new(buf, self.charset) {
+            self.writer
+                .write_char(c)
+                .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+        }
+
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
 const HEX_CHARS_LOWER: &[u8; 16] = b"0123456789abcdef";
 const HEX_CHARS_UPPER: &[u8; 16] = b"0123456789ABCDEF";
 
@@ -406,6 +466,7 @@ mod test {
     #[cfg(feature = "alloc")]
     use alloc::vec;
     use pretty_assertions::assert_eq;
+    use std::io::Write;
 
     #[test]
     #[cfg(feature = "alloc")]
@@ -539,5 +600,24 @@ mod test {
             [0x66, 0x6f, 0x6f, 0x62, 0x61, 0x72].encode_hex_upper::<String>(),
             "666F6F626172".to_string(),
         );
+    }
+
+    #[test]
+    #[cfg(feature = "std")]
+    fn test_hex_writer() {
+        let data1 = [0x66, 0x6f, 0x6f, 0x62];
+        let data2 = [0x61, 0x72];
+
+        let mut lower_writer = HexWriter::new(String::new());
+        lower_writer.write_all(&data1).unwrap();
+        lower_writer.write_all(&data2).unwrap();
+        let lower = lower_writer.into_inner();
+        assert_eq!(&lower, "666f6f626172");
+
+        let mut upper_writer = HexWriter::new_upper(String::new());
+        upper_writer.write_all(&data1).unwrap();
+        upper_writer.write_all(&data2).unwrap();
+        let upper = upper_writer.into_inner();
+        assert_eq!(&upper, "666F6F626172");
     }
 }
