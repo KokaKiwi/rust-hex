@@ -27,7 +27,7 @@ name = "hex"
 harness = false
 
 [dependencies]
-heapless = { version = "0.7", optional = true }
+heapless = { version = "0.8", optional = true }
 serde = { version = "1.0", default-features = false, optional = true }
 
 [dev-dependencies]
