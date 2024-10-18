@@ -134,7 +134,7 @@ fn encode_to_iter<T: iter::FromIterator<char>>(table: &'static [u8; 16], source:
     BytesToHexChars::new(source, table).collect()
 }
 
-impl<T: AsRef<[u8]>> ToHex for T {
+impl<T: AsRef<[u8]> + ?Sized> ToHex for T {
     fn encode_hex<U: iter::FromIterator<char>>(&self) -> U {
         encode_to_iter(HEX_CHARS_LOWER, self.as_ref())
     }
@@ -538,6 +538,13 @@ mod test {
         assert_eq!(
             [0x66, 0x6f, 0x6f, 0x62, 0x61, 0x72].encode_hex_upper::<String>(),
             "666F6F626172".to_string(),
+        );
+
+        // test for unsize type.
+        let s = &[0x66, 0x6f, 0x6f, 0x62, 0x61, 0x72];
+        assert_eq!(
+            <[u8]>::encode_hex::<String>(s),
+            "666f6f626172".to_string(),
         );
     }
 }
