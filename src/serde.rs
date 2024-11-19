@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0 OR MIT
 //! Hex encoding with `serde`.
 #[cfg_attr(
     all(feature = "alloc", feature = "serde"),

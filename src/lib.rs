@@ -1,11 +1,6 @@
 // Copyright (c) 2013-2014 The Rust Project Developers.
-// Copyright (c) 2015-2020 The rust-hex Developers.
-//
-// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
-// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
-// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
-// option. This file may not be copied, modified, or distributed
-// except according to those terms.
+// Copyright (c) 2015-2021 The rust-hex Developers.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
 //! Encoding and decoding hex strings.
 //!
 //! For most cases, you can simply use the [`decode`], [`encode`] and
