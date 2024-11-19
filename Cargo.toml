@@ -10,6 +10,7 @@ edition = "2018"
 readme = "README.md"
 keywords = ["no_std", "hex"]
 categories = ["encoding", "no-std"]
+rust-version = "1.60"
 
 [badges]
 maintenance = { status = "actively-developed" }
