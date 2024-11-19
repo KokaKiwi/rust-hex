@@ -94,7 +94,7 @@ impl<'a> BytesToHexChars<'a> {
     }
 }
 
-impl<'a> Iterator for BytesToHexChars<'a> {
+impl Iterator for BytesToHexChars<'_> {
     type Item = char;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -114,7 +114,7 @@ impl<'a> Iterator for BytesToHexChars<'a> {
     }
 }
 
-impl<'a> iter::ExactSizeIterator for BytesToHexChars<'a> {
+impl iter::ExactSizeIterator for BytesToHexChars<'_> {
     fn len(&self) -> usize {
         let mut length = self.inner.len() * 2;
         if self.next.is_some() {
