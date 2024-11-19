@@ -1,4 +1,4 @@
-#![allow(non_fmt_panic)]
+#![allow(non_fmt_panics)]
 
 #[test]
 fn test_readme_deps() {
