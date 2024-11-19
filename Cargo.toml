@@ -27,13 +27,14 @@ harness = false
 serde = { version = "1.0", default-features = false, optional = true }
 
 [dev-dependencies]
-criterion = "0.3"
-rustc-hex = "2.1"
-faster-hex = "0.5"
-version-sync = "0.9"
-pretty_assertions = "0.6"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+criterion = "0.5.1"
+data-encoding = "2.6.0"
+rustc-hex = "2.1.0"
+faster-hex = "0.10.0"
+version-sync = "0.9.5"
+pretty_assertions = "1.4.1"
+serde = { version = "1.0.215", features = ["derive"] }
+serde_json = "1.0.133"
 
 [package.metadata.docs.rs]
 all-features = true
