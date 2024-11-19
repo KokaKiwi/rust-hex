@@ -168,14 +168,34 @@ pub trait FromHex: Sized {
 }
 
 const fn val(c: u8, idx: usize) -> Result<u8, FromHexError> {
-    match c {
-        b'A'..=b'F' => Ok(c - b'A' + 10),
-        b'a'..=b'f' => Ok(c - b'a' + 10),
-        b'0'..=b'9' => Ok(c - b'0'),
-        _ => Err(FromHexError::InvalidHexCharacter {
+    const LOOKUP: [u8; 256] = {
+        let mut arr = [0; 256];
+        let mut i = 0;
+
+        while i < arr.len() {
+            // will not overflow as i < 256 or loop breaks
+            let c = i as u8;
+            arr[i] = match c {
+                b'A'..=b'F' => c - b'A' + 10,
+                b'a'..=b'f' => c - b'a' + 10,
+                b'0'..=b'9' => c - b'0',
+                _ => 255,
+            };
+            i += 1;
+        }
+
+        arr
+    };
+
+    let val = LOOKUP[c as usize];
+
+    if val == 255 {
+        Err(FromHexError::InvalidHexCharacter {
             c: c as char,
             index: idx,
-        }),
+        })
+    } else {
+        Ok(val)
     }
 }
 
