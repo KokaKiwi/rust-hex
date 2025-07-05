@@ -17,7 +17,7 @@
 [codecov-url]: https://codecov.io/gh/KokaKiwi/rust-hex
 [deps-svg]: https://deps.rs/repo/github/KokaKiwi/rust-hex/status.svg
 [deps-url]: https://deps.rs/repo/github/KokaKiwi/rust-hex
-[msrv-svg]: https://img.shields.io/badge/MSRV-1.68-blue
+[msrv-svg]: https://img.shields.io/badge/MSRV-1.63-blue
 
 Encoding and decoding data into/from hexadecimal representation.
 
