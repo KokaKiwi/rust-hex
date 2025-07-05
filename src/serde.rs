@@ -16,9 +16,28 @@ struct Foo {
 ```
 "##
 )]
+#[cfg_attr(
+    all(feature = "heapless", feature = "serde"),
+    doc = r##"
+# Example
+
+```
+use serde::{Serialize, Deserialize};
+
+#[derive(Serialize, Deserialize)]
+struct Foo<const N: usize> {
+    #[serde(
+        serialize_with = "hex::serialize_heapless::<_, _, N>",
+        deserialize_with = "hex::deserialize"
+    )]
+    bar: heapless::Vec<u8,N>,
+}
+```
+"##
+)]
 use serde::de::{Error, Visitor};
 use serde::Deserializer;
-#[cfg(feature = "alloc")]
+#[cfg(any(feature = "alloc", feature = "heapless"))]
 use serde::Serializer;
 
 #[cfg(feature = "alloc")]
@@ -29,7 +48,7 @@ use core::marker::PhantomData;
 
 use crate::FromHex;
 
-#[cfg(feature = "alloc")]
+#[cfg(any(feature = "alloc", feature = "heapless"))]
 use crate::ToHex;
 
 /// Serializes `data` as hex string using uppercase characters.
@@ -42,6 +61,22 @@ where
     T: ToHex,
 {
     let s = data.encode_hex_upper::<String>();
+    serializer.serialize_str(&s)
+}
+
+/// Serializes `data` as hex string using uppercase characters.
+///
+/// Apart from the characters' casing, this works exactly like `serialize_heapless()`.
+#[cfg(feature = "heapless")]
+pub fn serialize_upper_heapless<S, T, const N: usize>(
+    data: T,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+    T: ToHex,
+{
+    let s = data.encode_hex_upper::<heapless::String<N>>();
     serializer.serialize_str(&s)
 }
 
@@ -58,6 +93,22 @@ where
     T: ToHex,
 {
     let s = data.encode_hex::<String>();
+    serializer.serialize_str(&s)
+}
+
+/// Serializes `data` as hex string using lowercase characters.
+///
+/// Lowercase characters are used (e.g. `f9b4ca`). The resulting string's length
+/// is always even, each byte in data is always encoded using two hex digits.
+/// Thus, the resulting string contains exactly twice as many bytes as the input
+/// data.
+#[cfg(feature = "heapless")]
+pub fn serialize_heapless<S, T, const N: usize>(data: T, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+    T: ToHex,
+{
+    let s = data.encode_hex::<heapless::String<N>>();
     serializer.serialize_str(&s)
 }
 

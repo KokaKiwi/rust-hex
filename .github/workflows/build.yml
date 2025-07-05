@@ -65,6 +65,12 @@ jobs:
           command: test
           args: --verbose --no-default-features --features alloc
 
+      - name: Test [heapless]
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --verbose --no-default-features --features heapless
+
       - name: Test [serde]
         uses: actions-rs/cargo@v1
         with:
@@ -98,6 +104,28 @@ jobs:
         with:
           command: build
           args: --no-default-features --features alloc --target thumbv6m-none-eabi
+
+  build-no-alloc:
+    name: Build no_std
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Sources
+        uses: actions/checkout@v2
+
+      - name: Install Rust Toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          target: thumbv6m-none-eabi
+
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --no-default-features --features heapless --target thumbv6m-none-eabi
 
   # coverage:
   #   name: Code Coverage
