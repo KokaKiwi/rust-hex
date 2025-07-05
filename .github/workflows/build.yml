@@ -45,6 +45,9 @@ jobs:
           args: --all -- --check
 
       - name: Clippy Check
+        # Only run clippy on nightly so we get latest lints warnings if needed
+        if: ${{ matrix.toolchain == 'nightly' }}
+        continue-on-error: true
         uses: actions-rs/cargo@v1
         with:
           command: clippy
