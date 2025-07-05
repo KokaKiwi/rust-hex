@@ -15,8 +15,15 @@ jobs:
       # We want the tests to run on all configurations, even if jobs (like on nightly), fail.
       fail-fast: false
       matrix:
-        platform: [ubuntu-latest, windows-latest, macos-latest]
-        toolchain: ['1.60', stable, beta, nightly]
+        platform:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+        toolchain:
+          - '1.68'  # MSRV
+          - stable
+          - beta
+          - nightly
     runs-on: ${{ matrix.platform }}
 
     steps:
