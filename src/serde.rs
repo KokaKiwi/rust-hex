@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 //! Hex encoding with `serde`.
-#[cfg_attr(
+#![cfg_attr(
     all(feature = "alloc", feature = "serde"),
     doc = r##"
 # Example
@@ -36,6 +36,7 @@ use crate::ToHex;
 ///
 /// Apart from the characters' casing, this works exactly like `serialize()`.
 #[cfg(feature = "alloc")]
+#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 pub fn serialize_upper<S, T>(data: T, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
@@ -52,6 +53,7 @@ where
 /// Thus, the resulting string contains exactly twice as many bytes as the input
 /// data.
 #[cfg(feature = "alloc")]
+#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 pub fn serialize<S, T>(data: T, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
