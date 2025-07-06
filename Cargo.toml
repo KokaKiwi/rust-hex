@@ -19,6 +19,7 @@ maintenance = { status = "actively-developed" }
 default = ["std"]
 alloc = []
 std = ["alloc"]
+serde = ["dep:serde"]
 
 [[bench]]
 name = "hex"
