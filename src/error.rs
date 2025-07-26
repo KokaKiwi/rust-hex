@@ -2,7 +2,7 @@
 use core::fmt;
 
 /// The error type for decoding a hex string into `Vec<u8>` or `[u8; N]`.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FromHexError {
     /// An invalid character was found. Valid ones are: `0...9`, `a...f`
     /// or `A...F`.
@@ -18,8 +18,7 @@ pub enum FromHexError {
     InvalidStringLength,
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for FromHexError {}
+impl core::error::Error for FromHexError {}
 
 impl fmt::Display for FromHexError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
