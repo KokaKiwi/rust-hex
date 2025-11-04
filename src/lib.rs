@@ -31,6 +31,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![allow(clippy::unreadable_literal)]
+#![forbid(unsafe_code)]
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
@@ -79,7 +80,7 @@ const HEX_CHARS_LOWER: &[u8; 16] = b"0123456789abcdef";
 const HEX_CHARS_UPPER: &[u8; 16] = b"0123456789ABCDEF";
 
 struct BytesToHexChars<'a> {
-    inner: ::core::slice::Iter<'a, u8>,
+    inner: core::slice::Iter<'a, u8>,
     table: &'static [u8; 16],
     next: Option<char>,
 }
@@ -114,7 +115,7 @@ impl Iterator for BytesToHexChars<'_> {
     }
 }
 
-impl iter::ExactSizeIterator for BytesToHexChars<'_> {
+impl ExactSizeIterator for BytesToHexChars<'_> {
     fn len(&self) -> usize {
         let mut length = self.inner.len() * 2;
         if self.next.is_some() {

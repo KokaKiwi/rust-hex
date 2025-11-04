@@ -29,7 +29,7 @@ harness = false
 serde = { version = "1.0", default-features = false, optional = true }
 
 [dev-dependencies]
-criterion = "0.5.1"
+criterion = "0.7.0"
 data-encoding = "2.6.0"
 rustc-hex = "2.1.0"
 faster-hex = "0.10.0"
