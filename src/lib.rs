@@ -508,9 +508,6 @@ mod test {
 
         // test for unsize type.
         let s = &[0x66, 0x6f, 0x6f, 0x62, 0x61, 0x72];
-        assert_eq!(
-            <[u8]>::encode_hex::<String>(s),
-            "666f6f626172".to_string(),
-        );
+        assert_eq!(<[u8]>::encode_hex::<String>(s), "666f6f626172".to_string(),);
     }
 }
