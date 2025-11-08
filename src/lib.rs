@@ -227,6 +227,27 @@ pub fn encode<T: AsRef<[u8]>>(data: T) -> String {
     data.encode_hex()
 }
 
+/// Encodes `data` as hex string using lowercase characters, appending to target string.
+///
+/// This is otherwise the same as [`encode`].  One reason to use this function
+/// is that if you are performing multiple encodings on distinct data in
+/// a loop, this will allow reusing the allocation of a string.
+///
+/// Alternatively, this is also more efficient to use when you have an
+/// existing string and just want to append to it.
+///
+/// # Example
+///
+/// ```
+/// let mut s = "The hex encoding is: ".to_string();
+/// hex::encode_to("Hello world!", &mut s);
+/// assert_eq!(s, "The hex encoding is: 48656c6c6f20776f726c6421");
+/// ```
+#[cfg(feature = "alloc")]
+pub fn encode_to<T: AsRef<[u8]>>(data: T, s: &mut String) {
+    s.extend(BytesToHexChars::new(data.as_ref(), HEX_CHARS_LOWER))
+}
+
 /// Encodes `data` as hex string using uppercase characters.
 ///
 /// Apart from the characters' casing, this works exactly like `encode()`.
@@ -241,6 +262,22 @@ pub fn encode<T: AsRef<[u8]>>(data: T) -> String {
 #[cfg(feature = "alloc")]
 pub fn encode_upper<T: AsRef<[u8]>>(data: T) -> String {
     data.encode_hex_upper()
+}
+
+/// Encodes `data` as hex string using uppercase characters, appending to target string.
+///
+/// This is the same as [`encode_to`], but uses uppercase characters.
+///
+/// # Example
+///
+/// ```
+/// let mut s = "The hex encoding is: ".to_string();
+/// hex::encode_upper_to("Hello world!", &mut s);
+/// assert_eq!(s, "The hex encoding is: 48656C6C6F20776F726C6421");
+/// ```
+#[cfg(feature = "alloc")]
+pub fn encode_upper_to<T: AsRef<[u8]>>(data: T, s: &mut String) {
+    s.extend(BytesToHexChars::new(data.as_ref(), HEX_CHARS_UPPER))
 }
 
 /// Decodes a hex string into raw bytes.
