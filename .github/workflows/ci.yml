@@ -98,6 +98,42 @@ jobs:
       - name: Validate Benchmarks
         run: cargo bench --all -- --test
 
+  # Code coverage
+  coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Sources
+        uses: actions/checkout@v4
+
+      - name: Install Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+
+      - name: Setup Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+
+      - name: Generate Coverage
+        run: |
+          cargo llvm-cov clean --workspace
+          cargo llvm-cov --no-report --no-default-features
+          cargo llvm-cov --no-report --no-default-features --features alloc
+          cargo llvm-cov --no-report --features serde
+          cargo llvm-cov --no-report --all-features
+          cargo llvm-cov report --lcov --output-path lcov.info
+
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: lcov.info
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
   # Verify no_std compatibility
   no-std:
     name: Build no_std
