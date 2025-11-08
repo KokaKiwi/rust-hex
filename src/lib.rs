@@ -29,7 +29,6 @@
 
 #![doc(html_root_url = "https://docs.rs/hex/0.4.3")]
 #![cfg_attr(not(feature = "std"), no_std)]
-#![cfg_attr(docsrs, feature(doc_cfg))]
 #![allow(clippy::unreadable_literal)]
 #![forbid(unsafe_code)]
 
@@ -44,7 +43,6 @@ mod error;
 pub use crate::error::FromHexError;
 
 #[cfg(feature = "serde")]
-#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 pub mod serde;
 #[cfg(feature = "serde")]
 pub use crate::serde::deserialize;
