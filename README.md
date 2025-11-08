@@ -5,7 +5,7 @@
 [![docs-svg]][docs-url]
 [![codecov-svg]][codecov-url]
 [![deps-svg]][deps-url]
-[![msrv-svg]][./MSRV-POLICY.md]
+[![msrv-svg]](./MSRV-POLICY.md)
 
 [ga-svg]: https://github.com/KokaKiwi/rust-hex/workflows/build/badge.svg
 [ga-url]: https://github.com/KokaKiwi/rust-hex/actions
