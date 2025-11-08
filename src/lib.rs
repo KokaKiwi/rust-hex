@@ -1,11 +1,6 @@
 // Copyright (c) 2013-2014 The Rust Project Developers.
-// Copyright (c) 2015-2020 The rust-hex Developers.
-//
-// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
-// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
-// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
-// option. This file may not be copied, modified, or distributed
-// except according to those terms.
+// Copyright (c) 2015-2021 The rust-hex Developers.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
 //! Encoding and decoding hex strings.
 //!
 //! For most cases, you can simply use the [`decode`], [`encode`] and
@@ -36,6 +31,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![allow(clippy::unreadable_literal)]
+#![forbid(unsafe_code)]
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
@@ -84,7 +80,7 @@ const HEX_CHARS_LOWER: &[u8; 16] = b"0123456789abcdef";
 const HEX_CHARS_UPPER: &[u8; 16] = b"0123456789ABCDEF";
 
 struct BytesToHexChars<'a> {
-    inner: ::core::slice::Iter<'a, u8>,
+    inner: core::slice::Iter<'a, u8>,
     table: &'static [u8; 16],
     next: Option<char>,
 }
@@ -99,7 +95,7 @@ impl<'a> BytesToHexChars<'a> {
     }
 }
 
-impl<'a> Iterator for BytesToHexChars<'a> {
+impl Iterator for BytesToHexChars<'_> {
     type Item = char;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -119,7 +115,7 @@ impl<'a> Iterator for BytesToHexChars<'a> {
     }
 }
 
-impl<'a> iter::ExactSizeIterator for BytesToHexChars<'a> {
+impl ExactSizeIterator for BytesToHexChars<'_> {
     fn len(&self) -> usize {
         let mut length = self.inner.len() * 2;
         if self.next.is_some() {
@@ -134,7 +130,7 @@ fn encode_to_iter<T: iter::FromIterator<char>>(table: &'static [u8; 16], source:
     BytesToHexChars::new(source, table).collect()
 }
 
-impl<T: AsRef<[u8]>> ToHex for T {
+impl<T: AsRef<[u8]> + ?Sized> ToHex for T {
     fn encode_hex<U: iter::FromIterator<char>>(&self) -> U {
         encode_to_iter(HEX_CHARS_LOWER, self.as_ref())
     }
@@ -231,44 +227,15 @@ impl FromHex for Vec<u8> {
     }
 }
 
-// Helper macro to implement the trait for a few fixed sized arrays. Once Rust
-// has type level integers, this should be removed.
-macro_rules! from_hex_array_impl {
-    ($($len:expr)+) => {$(
-        impl FromHex for [u8; $len] {
-            type Error = FromHexError;
+impl<const N: usize> FromHex for [u8; N] {
+    type Error = FromHexError;
 
-            fn from_hex<T: AsRef<[u8]>>(hex: T) -> Result<Self, Self::Error> {
-                let mut out = [0_u8; $len];
-                decode_to_slice(hex, &mut out as &mut [u8])?;
-                Ok(out)
-            }
-        }
-    )+}
-}
+    fn from_hex<T: AsRef<[u8]>>(hex: T) -> Result<Self, Self::Error> {
+        let mut out = [0_u8; N];
+        decode_to_slice(hex, &mut out as &mut [u8])?;
 
-from_hex_array_impl! {
-    1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16
-    17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32
-    33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48
-    49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64
-    65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80
-    81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96
-    97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112
-    113 114 115 116 117 118 119 120 121 122 123 124 125 126 127 128
-    160 192 200 224 256 384 512 768 1024 2048 4096 8192 16384 32768
-}
-
-#[cfg(any(target_pointer_width = "32", target_pointer_width = "64"))]
-from_hex_array_impl! {
-    65536 131072 262144 524288 1048576 2097152 4194304 8388608
-    16777216 33554432 67108864 134217728 268435456 536870912
-    1073741824 2147483648
-}
-
-#[cfg(target_pointer_width = "64")]
-from_hex_array_impl! {
-    4294967296
+        Ok(out)
+    }
 }
 
 /// Encodes `data` as hex string using lowercase characters.
@@ -357,15 +324,28 @@ pub fn decode_to_slice<T: AsRef<[u8]>>(data: T, out: &mut [u8]) -> Result<(), Fr
     Ok(())
 }
 
-// generates an iterator like this
-// (0, 1)
-// (2, 3)
-// (4, 5)
-// (6, 7)
-// ...
-#[inline]
-fn generate_iter(len: usize) -> impl Iterator<Item = (usize, usize)> {
-    (0..len).step_by(2).zip((0..len).skip(1).step_by(2))
+/// Decode a hex string into itself.
+///
+/// Both, upper and lower case characters are valid in the input string and can
+/// even be mixed (e.g. `f9b4ca`, `F9B4CA` and `f9B4Ca` are all valid strings).
+///
+/// # Example
+///
+/// ```
+/// let mut bytes: [u8; 8] = *b"6b697769";
+/// assert_eq!(hex::decode_in_slice(&mut bytes), Ok(()));
+/// assert_eq!(&bytes[0..bytes.len() / 2], b"kiwi");
+/// ```
+pub fn decode_in_slice(in_out: &mut [u8]) -> Result<(), FromHexError> {
+    if in_out.len() % 2 != 0 {
+        return Err(FromHexError::OddLength);
+    }
+
+    for i in 0..(in_out.len() / 2) {
+        in_out[i] = val(in_out[2 * i], 2 * i)? << 4 | val(in_out[2 * i + 1], 2 * i + 1)?;
+    }
+
+    Ok(())
 }
 
 // the inverse of `val`.
@@ -412,18 +392,16 @@ fn byte2hex(byte: u8, table: &[u8; 16]) -> (u8, u8) {
 /// # }
 /// ```
 pub fn encode_to_slice<T: AsRef<[u8]>>(input: T, output: &mut [u8]) -> Result<(), FromHexError> {
-    if input.as_ref().len() * 2 != output.len() {
+    let input = input.as_ref();
+    if input.len() * 2 != output.len() {
         return Err(FromHexError::InvalidStringLength);
     }
 
-    for (byte, (i, j)) in input
-        .as_ref()
-        .iter()
-        .zip(generate_iter(input.as_ref().len() * 2))
-    {
-        let (high, low) = byte2hex(*byte, HEX_CHARS_LOWER);
-        output[i] = high;
-        output[j] = low;
+    // TODO: use array_chunks_mut instead of chunks_exact_mut once it stabilises
+    for (out, &byte) in output.chunks_exact_mut(2).zip(input.iter()) {
+        let (high, low) = byte2hex(byte, HEX_CHARS_LOWER);
+        out[0] = high;
+        out[1] = low;
     }
 
     Ok(())
@@ -432,19 +410,7 @@ pub fn encode_to_slice<T: AsRef<[u8]>>(input: T, output: &mut [u8]) -> Result<()
 #[cfg(test)]
 mod test {
     use super::*;
-    #[cfg(feature = "alloc")]
-    use alloc::string::ToString;
-    #[cfg(feature = "alloc")]
-    use alloc::vec;
     use pretty_assertions::assert_eq;
-
-    #[test]
-    #[cfg(feature = "alloc")]
-    fn test_gen_iter() {
-        let result = vec![(0, 1), (2, 3)];
-
-        assert_eq!(generate_iter(5).collect::<Vec<_>>(), result);
-    }
 
     #[test]
     fn test_encode_to_slice() {
@@ -563,12 +529,24 @@ mod test {
     fn test_to_hex() {
         assert_eq!(
             [0x66, 0x6f, 0x6f, 0x62, 0x61, 0x72].encode_hex::<String>(),
-            "666f6f626172".to_string(),
+            "666f6f626172",
         );
 
         assert_eq!(
             [0x66, 0x6f, 0x6f, 0x62, 0x61, 0x72].encode_hex_upper::<String>(),
-            "666F6F626172".to_string(),
+            "666F6F626172",
+        );
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn test_unsized_to_hex() {
+        use alloc::string::ToString;
+
+        let s: &str = "Hello, world!";
+        assert_eq!(
+            <str>::encode_hex::<String>(s),
+            "48656c6c6f2c20776f726c6421".to_string()
         );
     }
 }

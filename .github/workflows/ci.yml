@@ -1,0 +1,158 @@
+name: CI
+permissions:
+  contents: read
+  pull-requests: write
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Cancel in-progress runs for the same PR/branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  RUST_BACKTRACE: "1"
+  RUSTFLAGS: -D warnings
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # Fast checks that should fail quickly to give rapid feedback
+  format:
+    name: Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Sources
+        uses: actions/checkout@v4
+
+      - name: Install Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+
+      - name: Check Code Format
+        run: cargo fmt --all -- --check
+
+  clippy:
+    name: Clippy Lints
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Sources
+        uses: actions/checkout@v4
+
+      - name: Install Rust Toolchain
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: clippy
+
+      - name: Setup Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run Clippy
+        run: cargo clippy --all-features --all-targets
+        continue-on-error: true
+
+  # Core test matrix across platforms and toolchains
+  test:
+    name: Test (${{ matrix.platform }}, ${{ matrix.toolchain }})
+    strategy:
+      # We want the tests to run on all configurations, even if some fail
+      fail-fast: false
+      matrix:
+        platform:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+        toolchain:
+          - '1.85'  # MSRV
+          - stable
+          - beta
+          - nightly
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - name: Checkout Sources
+        uses: actions/checkout@v4
+
+      - name: Install Rust Toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.toolchain }}
+
+      - name: Setup Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.platform }}-${{ matrix.toolchain }}
+
+      - name: Test [no-default-features]
+        run: cargo test --verbose --no-default-features
+
+      - name: Test [alloc]
+        run: cargo test --verbose --no-default-features --features alloc
+
+      - name: Test [serde]
+        run: cargo test --verbose --features serde
+
+      - name: Test [all-features]
+        run: cargo test --verbose --all-features
+
+      - name: Validate Benchmarks
+        run: cargo bench --all -- --test
+
+  # Code coverage
+  coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Sources
+        uses: actions/checkout@v4
+
+      - name: Install Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+
+      - name: Setup Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+
+      - name: Generate Coverage
+        run: |
+          cargo llvm-cov clean --workspace
+          cargo llvm-cov --no-report --no-default-features
+          cargo llvm-cov --no-report --no-default-features --features alloc
+          cargo llvm-cov --no-report --features serde
+          cargo llvm-cov --no-report --all-features
+          cargo llvm-cov report --lcov --output-path lcov.info
+
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: lcov.info
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  # Verify no_std compatibility
+  no-std:
+    name: Build no_std
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Sources
+        uses: actions/checkout@v4
+
+      - name: Install Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: thumbv6m-none-eabi
+
+      - name: Setup Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build for no_std target
+        run: cargo build --no-default-features --features alloc --target thumbv6m-none-eabi

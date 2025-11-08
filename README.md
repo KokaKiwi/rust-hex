@@ -5,6 +5,7 @@
 [![docs-svg]][docs-url]
 [![codecov-svg]][codecov-url]
 [![deps-svg]][deps-url]
+[![msrv-svg]](./MSRV-POLICY.md)
 
 [ga-svg]: https://github.com/KokaKiwi/rust-hex/workflows/build/badge.svg
 [ga-url]: https://github.com/KokaKiwi/rust-hex/actions
@@ -16,6 +17,7 @@
 [codecov-url]: https://codecov.io/gh/KokaKiwi/rust-hex
 [deps-svg]: https://deps.rs/repo/github/KokaKiwi/rust-hex/status.svg
 [deps-url]: https://deps.rs/repo/github/KokaKiwi/rust-hex
+[msrv-svg]: https://img.shields.io/badge/MSRV-1.85-blue
 
 Encoding and decoding data into/from hexadecimal representation.
 
@@ -32,7 +34,7 @@ println!("{}", hex_string); // Prints "48656c6c6f20776f726c6421"
 Decoding a `String`
 
 ```rust
-let decoded_string = hex::decode("48656c6c6f20776f726c6421");
+let decoded_string = String::from_utf8(hex::decode("48656c6c6f20776f726c6421").unwrap()).unwrap();
 
 println!("{}", decoded_string); // Prints "Hello world!"
 ```
