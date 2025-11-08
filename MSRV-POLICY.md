@@ -16,17 +16,21 @@ rust-version = "1.85"
 
 ## Rationale
 
-This ensures `hex` remains accessible to users on stable Linux distributions without requiring rustup or third-party repositories. Debian stable's ~2 year release cycle provides predictable, infrequent MSRV updates.
+This ensures `hex` remains accessible to users on stable Linux distributions without requiring rustup or third-party repositories, while allowing the crate to adopt useful Rust features as they become available within that constraint.
 
 ## When to Update MSRV
 
-Update MSRV **only when a new Debian stable release is published** with a newer Rust version.
+MSRV may be updated when:
+- **A useful Rust feature becomes available** that would benefit the crate
+- **The new version does not exceed** the Rust version in current stable Debian
 
-Check current version at: https://packages.debian.org/stable/rustc
+MSRV updates **may occur in minor releases** (not just major releases).
+
+Check current Debian stable Rust version at: https://packages.debian.org/stable/rustc
 
 ## Update Process
 
-When Debian stable updates:
+When updating MSRV:
 
 1. **Update `Cargo.toml`**:
    ```toml
