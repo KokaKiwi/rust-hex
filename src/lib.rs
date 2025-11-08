@@ -505,9 +505,17 @@ mod test {
             [0x66, 0x6f, 0x6f, 0x62, 0x61, 0x72].encode_hex_upper::<String>(),
             "666F6F626172",
         );
+    }
 
-        // test for unsize type.
-        let s = &[0x66, 0x6f, 0x6f, 0x62, 0x61, 0x72];
-        assert_eq!(<[u8]>::encode_hex::<String>(s), "666f6f626172".to_string(),);
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn test_unsized_to_hex() {
+        use alloc::string::ToString;
+
+        let s: &str = "Hello, world!";
+        assert_eq!(
+            <str>::encode_hex::<String>(s),
+            "48656c6c6f2c20776f726c6421".to_string()
+        );
     }
 }
