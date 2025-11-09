@@ -37,7 +37,7 @@ extern crate alloc;
 #[cfg(feature = "alloc")]
 use alloc::{string::String, vec, vec::Vec};
 
-use core::{iter, u8};
+use core::iter;
 
 mod error;
 pub use crate::error::FromHexError;
@@ -166,6 +166,7 @@ pub trait FromHex: Sized {
     fn from_hex<T: AsRef<[u8]>>(hex: T) -> Result<Self, Self::Error>;
 }
 
+#[allow(non_upper_case_globals)]
 const __: u8 = u8::MAX;
 
 // Lookup table for ascii to hex decoding.
@@ -340,7 +341,8 @@ pub fn decode_in_slice(in_out: &mut [u8]) -> Result<(), FromHexError> {
     }
 
     for i in 0..(in_out.len() / 2) {
-        in_out[i] = val(in_out[2 * i], 2 * i)? << 4 | val(in_out[2 * i + 1], 2 * i + 1)?;
+        let byte = val(&in_out[2 * i..2 * i + 2], 2 * i)?;
+        in_out[i] = byte;
     }
 
     Ok(())
