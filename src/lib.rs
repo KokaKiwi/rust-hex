@@ -452,8 +452,6 @@ pub fn encode_to_slice_upper<T: AsRef<[u8]>>(
 #[cfg(test)]
 mod test {
     use super::*;
-    #[cfg(feature = "alloc")]
-    use alloc::string::ToString;
     use pretty_assertions::assert_eq;
 
     #[test]
