@@ -35,7 +35,7 @@
 #[cfg(feature = "alloc")]
 extern crate alloc;
 #[cfg(feature = "alloc")]
-use alloc::{string::String, vec::Vec};
+use alloc::{string::String, vec, vec::Vec};
 
 use core::iter;
 
@@ -166,16 +166,54 @@ pub trait FromHex: Sized {
     fn from_hex<T: AsRef<[u8]>>(hex: T) -> Result<Self, Self::Error>;
 }
 
-const fn val(c: u8, idx: usize) -> Result<u8, FromHexError> {
-    match c {
-        b'A'..=b'F' => Ok(c - b'A' + 10),
-        b'a'..=b'f' => Ok(c - b'a' + 10),
-        b'0'..=b'9' => Ok(c - b'0'),
-        _ => Err(FromHexError::InvalidHexCharacter {
-            c: c as char,
+#[allow(non_upper_case_globals)]
+const __: u8 = u8::MAX;
+
+// Lookup table for ascii to hex decoding.
+#[rustfmt::skip]
+static DECODE_TABLE: [u8; 256] = [
+    //   1   2   3   4   5   6   7   8   9   a   b   c   d   e   f
+    __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 0
+    __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 1
+    __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 2
+     0,  1,  2,  3,  4,  5,  6,  7,  8,  9, __, __, __, __, __, __, // 3
+    __, 10, 11, 12, 13, 14, 15, __, __, __, __, __, __, __, __, __, // 4
+    __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 5
+    __, 10, 11, 12, 13, 14, 15, __, __, __, __, __, __, __, __, __, // 6
+    __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 7
+    __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 8
+    __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 9
+    __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // a
+    __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // b
+    __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // c
+    __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // d
+    __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // e
+    __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // f
+];
+
+#[inline]
+fn val(bytes: &[u8], idx: usize) -> Result<u8, FromHexError> {
+    let upper = DECODE_TABLE[bytes[0] as usize];
+    let lower = DECODE_TABLE[bytes[1] as usize];
+    if upper == u8::MAX {
+        return Err(FromHexError::InvalidHexCharacter {
+            c: bytes[0] as char,
             index: idx,
-        }),
+        });
     }
+    if lower == u8::MAX {
+        return Err(FromHexError::InvalidHexCharacter {
+            c: bytes[1] as char,
+            index: idx + 1,
+        });
+    }
+    // upper and lower are only 4 bits large, so of the 8 bits only the first 4 are used.
+    // this merges the two 4 bit numbers into one 8 bit number:
+    //
+    // upper:  0 0 0 0 U U U U
+    // lower:  0 0 0 0 L L L L
+    // result: U U U U L L L L
+    Ok((upper << 4) | lower)
 }
 
 #[cfg(feature = "alloc")]
@@ -188,10 +226,9 @@ impl FromHex for Vec<u8> {
             return Err(FromHexError::OddLength);
         }
 
-        hex.chunks(2)
-            .enumerate()
-            .map(|(i, pair)| Ok(val(pair[0], 2 * i)? << 4 | val(pair[1], 2 * i + 1)?))
-            .collect()
+        let mut out = vec![0; hex.len() / 2];
+        decode_to_slice(hex, &mut out)?;
+        Ok(out)
     }
 }
 
@@ -274,6 +311,7 @@ pub fn decode<T: AsRef<[u8]>>(data: T) -> Result<Vec<u8>, FromHexError> {
 /// assert_eq!(hex::decode_to_slice("6b697769", &mut bytes as &mut [u8]), Ok(()));
 /// assert_eq!(&bytes, b"kiwi");
 /// ```
+#[inline]
 pub fn decode_to_slice<T: AsRef<[u8]>>(data: T, out: &mut [u8]) -> Result<(), FromHexError> {
     let data = data.as_ref();
 
@@ -284,8 +322,8 @@ pub fn decode_to_slice<T: AsRef<[u8]>>(data: T, out: &mut [u8]) -> Result<(), Fr
         return Err(FromHexError::InvalidStringLength);
     }
 
-    for (i, byte) in out.iter_mut().enumerate() {
-        *byte = val(data[2 * i], 2 * i)? << 4 | val(data[2 * i + 1], 2 * i + 1)?;
+    for (i, (data, byte)) in data.chunks_exact(2).zip(out).enumerate() {
+        *byte = val(data, 2 * i)?;
     }
 
     Ok(())
@@ -309,7 +347,8 @@ pub fn decode_in_slice(in_out: &mut [u8]) -> Result<(), FromHexError> {
     }
 
     for i in 0..(in_out.len() / 2) {
-        in_out[i] = val(in_out[2 * i], 2 * i)? << 4 | val(in_out[2 * i + 1], 2 * i + 1)?;
+        let byte = val(&in_out[2 * i..2 * i + 2], 2 * i)?;
+        in_out[i] = byte;
     }
 
     Ok(())
@@ -318,7 +357,7 @@ pub fn decode_in_slice(in_out: &mut [u8]) -> Result<(), FromHexError> {
 // the inverse of `val`.
 #[inline]
 #[must_use]
-const fn byte2hex(byte: u8, table: &[u8; 16]) -> (u8, u8) {
+fn byte2hex(byte: u8, table: &[u8; 16]) -> (u8, u8) {
     let high = table[((byte & 0xf0) >> 4) as usize];
     let low = table[(byte & 0x0f) as usize];
 
