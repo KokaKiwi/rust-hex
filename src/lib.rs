@@ -207,6 +207,12 @@ fn val(bytes: &[u8], idx: usize) -> Result<u8, FromHexError> {
             index: idx + 1,
         });
     }
+    // upper and lower are only 4 bits large, so of the 8 bits only the first 4 are used.
+    // this merges the two 4 bit numbers into one 8 bit number:
+    //
+    // upper:  0 0 0 0 U U U U
+    // lower:  0 0 0 0 L L L L
+    // result: U U U U L L L L
     Ok((upper << 4) | lower)
 }
 
