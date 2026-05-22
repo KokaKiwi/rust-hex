@@ -21,6 +21,9 @@ alloc = []
 std = ["alloc"]
 serde = ["dep:serde"]
 
+[lints.clippy]
+undocumented_unsafe_blocks = "deny"
+
 [[bench]]
 name = "hex"
 harness = false
