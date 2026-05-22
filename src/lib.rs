@@ -30,7 +30,8 @@
 #![doc(html_root_url = "https://docs.rs/hex/0.4.3")]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::unreadable_literal)]
-#![forbid(unsafe_code)]
+#![deny(unsafe_code)]
+#![forbid(unsafe_op_in_unsafe_fn)]
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
@@ -41,6 +42,9 @@ use core::iter;
 
 mod error;
 pub use crate::error::FromHexError;
+
+#[cfg(target_arch = "aarch64")]
+mod neon;
 
 #[cfg(feature = "serde")]
 pub mod serde;
@@ -328,6 +332,53 @@ pub fn decode_to_slice<T: AsRef<[u8]>>(data: T, out: &mut [u8]) -> Result<(), Fr
         return Err(FromHexError::InvalidStringLength);
     }
 
+    #[cfg(all(target_arch = "aarch64", feature = "std"))]
+    if neon::enabled() {
+        const CHUNK_SIZE: usize = 16;
+        let mut chunks = data.chunks_exact(CHUNK_SIZE);
+        let mut out = out;
+        let mut out_offset = 0;
+        for chunk in &mut chunks {
+            #[allow(unsafe_code)]
+            // SAFETY: `chunk` has 16 readable bytes, as guaranteed by `chunks_exact`.
+            match unsafe { neon::decode_u64(chunk.as_ptr()) } {
+                Ok(chunk_decoded) => {
+                    out[..8].copy_from_slice(&chunk_decoded.to_be_bytes());
+                    out = &mut out[8..];
+                }
+                Err(FromHexError::InvalidHexCharacter { c, index }) => {
+                    return Err(FromHexError::InvalidHexCharacter {
+                        c,
+                        index: index + out_offset,
+                    });
+                }
+                Err(e) => return Err(e),
+            }
+            out_offset += CHUNK_SIZE;
+        }
+        let remainder = chunks.remainder();
+        if !remainder.is_empty() {
+            let mut chunk = [b'0'; CHUNK_SIZE];
+            chunk[..remainder.len()].copy_from_slice(remainder);
+            #[allow(unsafe_code)]
+            // SAFETY: `chunk` has 16 readable bytes.
+            match unsafe { neon::decode_u64(chunk.as_ptr()) } {
+                Ok(chunk_decoded) => {
+                    let out_len = remainder.len() / 2;
+                    out[..out_len].copy_from_slice(&chunk_decoded.to_be_bytes()[..out_len]);
+                }
+                Err(FromHexError::InvalidHexCharacter { c, index }) => {
+                    return Err(FromHexError::InvalidHexCharacter {
+                        c,
+                        index: index + out_offset,
+                    });
+                }
+                Err(e) => return Err(e),
+            }
+        }
+        return Ok(());
+    }
+
     for (i, (data, byte)) in data.chunks_exact(2).zip(out).enumerate() {
         *byte = val(data, 2 * i)?;
     }
@@ -495,6 +546,31 @@ mod test {
         assert_eq!(
             decode_to_slice(b"6", &mut output_3),
             Err(FromHexError::OddLength)
+        );
+
+        let mut output_4 = [0; 8];
+        decode_to_slice(b"fedcba9876543210", &mut output_4).unwrap();
+        assert_eq!(output_4, [0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10]);
+
+        let mut output_5 = [0; 12];
+        decode_to_slice(b"fedcba987654321001234567", &mut output_5).unwrap();
+        assert_eq!(
+            output_5,
+            [0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10, 0x01, 0x23, 0x45, 0x67]
+        );
+
+        let mut output_6 = [0; 17];
+        assert_eq!(
+            decode_to_slice(b"0123456789abcde!0123456789abcdef01", &mut output_6),
+            Err(FromHexError::InvalidHexCharacter { c: '!', index: 15 })
+        );
+        assert_eq!(
+            decode_to_slice(b"0123456789abcdef012-456789abcdef01", &mut output_6),
+            Err(FromHexError::InvalidHexCharacter { c: '-', index: 19 })
+        );
+        assert_eq!(
+            decode_to_slice(b"0123456789abcdef0123456789abcdef?1", &mut output_6),
+            Err(FromHexError::InvalidHexCharacter { c: '?', index: 32 })
         );
     }
 
