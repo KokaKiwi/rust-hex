@@ -481,7 +481,7 @@ mod display {
     }
 
     impl core::fmt::Display for UpperHexDisplay<'_> {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
             for c in BytesToHexChars::new(self.0, HEX_CHARS_UPPER) {
                 f.write_char(c)?;
             }
@@ -496,7 +496,7 @@ mod display {
         }
     }
     impl core::fmt::Display for HexDisplay<'_> {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
             for c in BytesToHexChars::new(self.0, HEX_CHARS_LOWER) {
                 f.write_char(c)?;
             }
