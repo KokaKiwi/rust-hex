@@ -449,6 +449,62 @@ pub fn encode_to_slice_upper<T: AsRef<[u8]>>(
     encode_to_slice_inner(input.as_ref(), output, HEX_CHARS_UPPER)
 }
 
+pub use display::{ByteHexDisplay, HexDisplay, UpperHexDisplay};
+
+mod display {
+    use crate::{BytesToHexChars, HEX_CHARS_LOWER, HEX_CHARS_UPPER};
+    use core::fmt::Write;
+
+    impl<T> ByteHexDisplay for T
+    where
+        T: AsRef<[u8]>,
+    {
+        fn display_hex(&self) -> HexDisplay<'_> {
+            HexDisplay(self.as_ref())
+        }
+
+        fn display_hex_upper(&self) -> UpperHexDisplay<'_> {
+            UpperHexDisplay(self.as_ref())
+        }
+    }
+
+    pub trait ByteHexDisplay {
+        fn display_hex(&self) -> HexDisplay<'_>;
+        fn display_hex_upper(&self) -> UpperHexDisplay<'_>;
+    }
+
+    pub struct UpperHexDisplay<'a>(&'a [u8]);
+    impl<'a> UpperHexDisplay<'a> {
+        pub fn new(data: &'a [u8]) -> Self {
+            Self(data)
+        }
+    }
+
+    impl core::fmt::Display for UpperHexDisplay<'_> {
+        fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+            for c in BytesToHexChars::new(self.0, HEX_CHARS_UPPER) {
+                f.write_char(c)?;
+            }
+            Ok(())
+        }
+    }
+
+    pub struct HexDisplay<'a>(&'a [u8]);
+    impl<'a> HexDisplay<'a> {
+        pub fn new(data: &'a [u8]) -> Self {
+            Self(data)
+        }
+    }
+    impl core::fmt::Display for HexDisplay<'_> {
+        fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+            for c in BytesToHexChars::new(self.0, HEX_CHARS_LOWER) {
+                f.write_char(c)?;
+            }
+            Ok(())
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -502,6 +558,12 @@ mod test {
     #[cfg(feature = "alloc")]
     fn test_encode() {
         assert_eq!(encode("foobar"), "666f6f626172");
+    }
+
+    #[test]
+    fn test_display() {
+        assert_eq!(format!("{}", b"foobar".display_hex()), "666f6f626172");
+        assert_eq!(format!("{}", b"foobar".display_hex_upper()), "666F6F626172");
     }
 
     #[test]
