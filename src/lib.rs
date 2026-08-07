@@ -561,6 +561,12 @@ mod test {
     }
 
     #[test]
+    fn test_display() {
+        assert_eq!(format!("{}", b"foobar".display_hex()), "666f6f626172");
+        assert_eq!(format!("{}", b"foobar".display_hex_upper()), "666F6F626172");
+    }
+
+    #[test]
     #[cfg(feature = "alloc")]
     fn test_decode() {
         assert_eq!(
