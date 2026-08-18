@@ -13,7 +13,7 @@ pub enum FromHexError {
     OddLength,
 
     /// If the hex string is decoded into a fixed sized container, such as an
-    /// array, the hex string's length * 2 has to match the container's
+    /// array, the hex string's length / 2 has to match the container's
     /// length.
     InvalidStringLength,
 }
